@@ -16,12 +16,12 @@
 
 		var scene = new THREE.Scene();
 
-		var LENGTH = 10, COUNT = 7, INTER = 1; 
+		var LENGTH = 10, COUNT = 7, INTER = 0, OFFSET = (LENGTH+INTER)*(COUNT-1)/2; 
 		var box = new THREE.BoxGeometry( LENGTH, LENGTH, LENGTH );
-		//绿色
+		// 绿色
 		var box_color = new THREE.MeshBasicMaterial( { color: 0x00ff00 } );
 		var cube = new THREE.Mesh( box, box_color );
-		cube.position.set(-33, 33, 0);
+		cube.position.set(-OFFSET, OFFSET, 0);
 		var group = new THREE.Group();
 		group.add(cube);
 		scene.add( group );
@@ -29,15 +29,15 @@
 		for (var i = 0; i < COUNT; i++) for (var j = 0; j < COUNT; j++) for (var z = 0; z < COUNT; z++){
 			if (i == 0 && j == 0 && z == 0) continue;
 			var temp = cube.clone();
-			temp.position.set((LENGTH+INTER)*j-33, -(LENGTH+INTER)*i+33, (LENGTH+INTER)*z);
+			temp.position.set((LENGTH+INTER)*j-OFFSET, -(LENGTH+INTER)*i+OFFSET, (LENGTH+INTER)*z);
 			group.add(temp);
 		}
 
 		function animate() {
-			requestAnimationFrame( animate );
+			// requestAnimationFrame( animate );
 			renderer.render( scene, camera );
-			group.rotation.x += 0.01;
-			group.rotation.y += 0.01;
+			// group.rotation.x += 0.01;
+			// group.rotation.y += 0.01;
 		}
 		animate()
     </script>
