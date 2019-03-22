@@ -4,42 +4,98 @@
     <title></title>
     <style>canvas { width: 100%; height: 100% }</style>
     <script src="../three.js"></script>
+    <script src='../stats.js'></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/16.3.5/Tween.min.js"></script>
 </head>
 <body>
 	<script>
-		var renderer = new THREE.WebGLRenderer();
-		renderer.setSize( window.innerWidth, window.innerHeight );
-		document.body.appendChild( renderer.domElement );
-
-		var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-		camera.position.set( 0, 0, 200 );
-
-		var scene = new THREE.Scene();
-
-		var LENGTH = 10, COUNT = 7, INTER = 0, OFFSET = (LENGTH+INTER)*(COUNT-1)/2; 
-		var box = new THREE.BoxGeometry( LENGTH, LENGTH, LENGTH );
-		// 绿色
-		var box_color = new THREE.MeshBasicMaterial( { color: 0x00ff00 } );
-		var cube = new THREE.Mesh( box, box_color );
-		cube.position.set(-OFFSET, OFFSET, 0);
-		var group = new THREE.Group();
-		group.add(cube);
-		scene.add( group );
-
-		for (var i = 0; i < COUNT; i++) for (var j = 0; j < COUNT; j++) for (var z = 0; z < COUNT; z++){
-			if (i == 0 && j == 0 && z == 0) continue;
-			var temp = cube.clone();
-			temp.position.set((LENGTH+INTER)*j-OFFSET, -(LENGTH+INTER)*i+OFFSET, (LENGTH+INTER)*z);
-			group.add(temp);
+		var stats, renderer, camera, scene, light, group, geometry, material;
+		function initTween(){
+			new TWEEN.Tween( group.position)
+            .to( { x: -400 }, 3000 ).repeat( Infinity ).start();
 		}
+		function initStat() {
+        	stats = new Stats();
+			stats.setMode(0); // 0: fps, 1: ms
+			stats.domElement.style.position = 'absolute';
+			stats.domElement.style.left = '0px';
+			stats.domElement.style.top = '0px';
+			document.body.appendChild( stats.domElement );
+        }
+		function initRederer(){
+			renderer = new THREE.WebGLRenderer();
+			renderer.setSize( window.innerWidth, window.innerHeight );
+			document.body.appendChild( renderer.domElement );
+		}
+		function initCamera(){
+			camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+			camera.position.set( 0, 0, 400 );
+		}
+		function initScene(){
+			scene = new THREE.Scene();
+		}
+        function initLight() {
+            // light = new THREE.DirectionalLight(0xFF0000, 1.0, 0);
+            // light.position.set(100, 100, 200);
+            // scene.add(light);
+        }
+		// function initGroup(){
+		// 	var LENGTH = 10, COUNT = 7, INTER = 0, OFFSET = (LENGTH+INTER)*(COUNT-1)/2; 
+		// 	var box = new THREE.BoxGeometry( LENGTH, LENGTH, LENGTH );
+		// 	// 绿色
+		// 	var box_color = new THREE.MeshBasicMaterial( { color: 0x00ff00 } );
+		// 	var cube = new THREE.Mesh( box, box_color );
+		// 	cube.position.set(-OFFSET, OFFSET, 0);
+		// 	group = new THREE.Group();
+		// 	group.add(cube);
+		// 	for (var i = 0; i < COUNT; i++) for (var j = 0; j < COUNT; j++) for (var z = 0; z < COUNT; z++){
+		// 		if (i == 0 && j == 0 && z == 0) continue;
+		// 		var temp = cube.clone();
+		// 		temp.position.set((LENGTH+INTER)*j-OFFSET, -(LENGTH+INTER)*i+OFFSET, (LENGTH+INTER)*z);
+		// 		group.add(temp);
+		// 	}
 
+		// 	scene.add( group );
+		// }
+
+		function initGrids(){
+			group = new THREE.Group();
+			geometry = new THREE.Geometry();
+            material = new THREE.LineBasicMaterial({color: 0x777777});
+
+            var size = 20, inter = 10, len = 200;
+            geometry.vertices.push( new THREE.Vector3( -len/2, 0, 0 ) );
+            geometry.vertices.push( new THREE.Vector3( len/2, 0, 0 ) );
+            for ( var i = 0; i <= size; i ++ ) {
+                var item_row = new THREE.Line( geometry, material );
+                item_row.position.y = (i * inter) - len/2;
+                group.add( item_row );
+
+                var item_col = new THREE.Line( geometry, material );
+                item_col.rotation.z = Math.PI/2;
+                item_col.position.x = (i * inter) - len/2;
+                group.add( item_col );
+            }
+            scene.add(group);
+		}
 		function animate() {
-			// requestAnimationFrame( animate );
 			renderer.render( scene, camera );
-			// group.rotation.x += 0.01;
-			// group.rotation.y += 0.01;
+			requestAnimationFrame( animate );
+			stats.update();
+			TWEEN.update();
 		}
-		animate()
+		function init(){
+			initStat();
+			initRederer();
+			initCamera();
+			initScene();
+			initLight();
+			// initGroup();
+			initGrids();
+			initTween();
+			animate();
+		}
+		init();
     </script>
 </body>
 </html>
