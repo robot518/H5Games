@@ -29,34 +29,37 @@
 		}
 		function initCamera(){
 			camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+			// camera = new THREE.OrthographicCamera( window.innerWidth / - 2, window.innerWidth / 2, window.innerHeight / 2, window.innerHeight / - 2, 10, 1000 );
 			camera.position.set( 0, 0, 400 );
 		}
 		function initScene(){
 			scene = new THREE.Scene();
 		}
         function initLight() {
+        	light = new THREE.AmbientLight(0xFFFFFF);
             // light = new THREE.DirectionalLight(0xFF0000, 1.0, 0);
-            // light.position.set(100, 100, 200);
-            // scene.add(light);
+            light.position.set(100, 100, 200);
+            scene.add(light);
         }
-		// function initGroup(){
-		// 	var LENGTH = 10, COUNT = 7, INTER = 0, OFFSET = (LENGTH+INTER)*(COUNT-1)/2; 
-		// 	var box = new THREE.BoxGeometry( LENGTH, LENGTH, LENGTH );
-		// 	// 绿色
-		// 	var box_color = new THREE.MeshBasicMaterial( { color: 0x00ff00 } );
-		// 	var cube = new THREE.Mesh( box, box_color );
-		// 	cube.position.set(-OFFSET, OFFSET, 0);
-		// 	group = new THREE.Group();
-		// 	group.add(cube);
-		// 	for (var i = 0; i < COUNT; i++) for (var j = 0; j < COUNT; j++) for (var z = 0; z < COUNT; z++){
-		// 		if (i == 0 && j == 0 && z == 0) continue;
-		// 		var temp = cube.clone();
-		// 		temp.position.set((LENGTH+INTER)*j-OFFSET, -(LENGTH+INTER)*i+OFFSET, (LENGTH+INTER)*z);
-		// 		group.add(temp);
-		// 	}
+		function initGroup(){
+			var LENGTH = 10, COUNT = 7, INTER = 0, OFFSET = (LENGTH+INTER)*(COUNT-1)/2; 
+			var box = new THREE.BoxGeometry( LENGTH, LENGTH, LENGTH );
+			// 绿色
+			// material = new THREE.MeshBasicMaterial( { color: 0x00ff00 } );
+			material = new THREE.MeshLambertMaterial( { color:0xFFFFFF} );
+			var cube = new THREE.Mesh( box, material );
+			cube.position.set(-OFFSET, OFFSET, 0);
+			group = new THREE.Group();
+			group.add(cube);
+			for (var i = 0; i < COUNT; i++) for (var j = 0; j < COUNT; j++) for (var z = 0; z < COUNT; z++){
+				if (i == 0 && j == 0 && z == 0) continue;
+				var temp = cube.clone();
+				temp.position.set((LENGTH+INTER)*j-OFFSET, -(LENGTH+INTER)*i+OFFSET, (LENGTH+INTER)*z);
+				group.add(temp);
+			}
 
-		// 	scene.add( group );
-		// }
+			scene.add( group );
+		}
 
 		function initGrids(){
 			group = new THREE.Group();
@@ -80,9 +83,10 @@
 		}
 		function animate() {
 			renderer.render( scene, camera );
-			requestAnimationFrame( animate );
-			stats.update();
-			TWEEN.update();
+			// requestAnimationFrame( animate );
+			// group.rotation.x += 0.01;
+			// stats.update();
+			// TWEEN.update();
 		}
 		function init(){
 			initStat();
@@ -90,12 +94,15 @@
 			initCamera();
 			initScene();
 			initLight();
-			// initGroup();
-			initGrids();
+			initGroup();
+			// initGrids();
 			initTween();
 			animate();
 		}
 		init();
     </script>
+   <!--  <div>
+	    Fov:<input type="text" value="45" id="txtFov"/>
+	</div> -->
 </body>
 </html>
