@@ -11,8 +11,8 @@
 	<script>
 		var stats, renderer, camera, scene, light, group, geometry, material;
 		function initTween(){
-			new TWEEN.Tween( group.position)
-            .to( { x: -400 }, 3000 ).repeat( Infinity ).start();
+			// new TWEEN.Tween( group.position)
+   //          .to( { x: -400 }, 3000 ).repeat( Infinity ).start();
 		}
 		function initStat() {
         	stats = new Stats();
@@ -23,80 +23,101 @@
 			document.body.appendChild( stats.domElement );
         }
 		function initRederer(){
-			renderer = new THREE.WebGLRenderer();
+			renderer = new THREE.WebGLRenderer( { antialias: true } );
+			renderer.setPixelRatio( window.devicePixelRatio );
 			renderer.setSize( window.innerWidth, window.innerHeight );
 			document.body.appendChild( renderer.domElement );
 		}
 		function initCamera(){
 			camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 			// camera = new THREE.OrthographicCamera( window.innerWidth / - 2, window.innerWidth / 2, window.innerHeight / 2, window.innerHeight / - 2, 10, 1000 );
-			camera.position.set( 0, 0, 400 );
+			camera.position.set( 0, 0, 200 );
 		}
 		function initScene(){
 			scene = new THREE.Scene();
 		}
         function initLight() {
-        	light = new THREE.AmbientLight(0xFFFFFF);
-            // light = new THREE.DirectionalLight(0xFF0000, 1.0, 0);
-            light.position.set(100, 100, 200);
+        	// light = new THREE.AmbientLight(0x00FF00);
+        	// scene.add(light);
+            light = new THREE.DirectionalLight(0xFFFFFF, 1, 0);
+            light.position.set(0, 1, 1);
+            // scene.add(light);
+            // light = new THREE.PointLight(0x0000FF);
+            // light.position.set(0, 0, 100);
             scene.add(light);
         }
+        // 扫雷格子
 		function initGroup(){
-			var LENGTH = 10, COUNT = 7, INTER = 0, OFFSET = (LENGTH+INTER)*(COUNT-1)/2; 
-			var box = new THREE.BoxGeometry( LENGTH, LENGTH, LENGTH );
-			// 绿色
-			// material = new THREE.MeshBasicMaterial( { color: 0x00ff00 } );
-			material = new THREE.MeshLambertMaterial( { color:0xFFFFFF} );
-			var cube = new THREE.Mesh( box, material );
-			cube.position.set(-OFFSET, OFFSET, 0);
 			group = new THREE.Group();
-			group.add(cube);
+			var LENGTH = 10, COUNT = 7, INTER = 0, OFFSET = (LENGTH+INTER)*(COUNT-1)/2; 
+			geometry = new THREE.BoxBufferGeometry( LENGTH, LENGTH, LENGTH );
+			//纹理		
+			var texture = new THREE.TextureLoader().load( 'textures/1.jpg' );
+			// 绿色
+			material = new THREE.MeshBasicMaterial( { map: texture } );
+			// material = new THREE.MeshLambertMaterial( { color:0xFFFFFF} );
+			mesh = new THREE.Mesh( geometry, material );
+			// scene.add(mesh);
+			mesh.position.set(-OFFSET, OFFSET, 0);
+			group.add(mesh);
 			for (var i = 0; i < COUNT; i++) for (var j = 0; j < COUNT; j++) for (var z = 0; z < COUNT; z++){
 				if (i == 0 && j == 0 && z == 0) continue;
-				var temp = cube.clone();
+				var temp = mesh.clone();
 				temp.position.set((LENGTH+INTER)*j-OFFSET, -(LENGTH+INTER)*i+OFFSET, (LENGTH+INTER)*z);
 				group.add(temp);
 			}
 
 			scene.add( group );
+			window.addEventListener( 'resize', onWindowResize, false );
 		}
+		function onWindowResize() {
 
+			camera.aspect = window.innerWidth / window.innerHeight;
+			camera.updateProjectionMatrix();
+
+			renderer.setSize( window.innerWidth, window.innerHeight );
+
+		}
+		// 网格
 		function initGrids(){
-			group = new THREE.Group();
-			geometry = new THREE.Geometry();
-            material = new THREE.LineBasicMaterial({color: 0x777777});
+			// group = new THREE.Group();
+			// geometry = new THREE.Geometry();
+   //          material = new THREE.LineBasicMaterial({color: 0x777777});
 
-            var size = 20, inter = 10, len = 200;
-            geometry.vertices.push( new THREE.Vector3( -len/2, 0, 0 ) );
-            geometry.vertices.push( new THREE.Vector3( len/2, 0, 0 ) );
-            for ( var i = 0; i <= size; i ++ ) {
-                var item_row = new THREE.Line( geometry, material );
-                item_row.position.y = (i * inter) - len/2;
-                group.add( item_row );
+   //          var size = 20, inter = 10, len = 200;
+   //          geometry.vertices.push( new THREE.Vector3( -len/2, 0, 0 ) );
+   //          geometry.vertices.push( new THREE.Vector3( len/2, 0, 0 ) );
+   //          for ( var i = 0; i <= size; i ++ ) {
+   //              var item_row = new THREE.Line( geometry, material );
+   //              item_row.position.y = (i * inter) - len/2;
+   //              group.add( item_row );
 
-                var item_col = new THREE.Line( geometry, material );
-                item_col.rotation.z = Math.PI/2;
-                item_col.position.x = (i * inter) - len/2;
-                group.add( item_col );
-            }
-            scene.add(group);
+   //              var item_col = new THREE.Line( geometry, material );
+   //              item_col.rotation.z = Math.PI/2;
+   //              item_col.position.x = (i * inter) - len/2;
+   //              group.add( item_col );
+   //          }
+            
+   //          scene.add(group);
 		}
 		function animate() {
+			group.rotation.x += 0.005;
+			group.rotation.y += 0.01;
 			renderer.render( scene, camera );
-			// requestAnimationFrame( animate );
+			requestAnimationFrame( animate );
 			// group.rotation.x += 0.01;
 			// stats.update();
 			// TWEEN.update();
 		}
 		function init(){
-			initStat();
+			// initStat();
 			initRederer();
 			initCamera();
 			initScene();
-			initLight();
+			// initLight();
 			initGroup();
 			// initGrids();
-			initTween();
+			// initTween();
 			animate();
 		}
 		init();
