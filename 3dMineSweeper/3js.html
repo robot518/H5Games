@@ -52,9 +52,10 @@
 			var LENGTH = 10, COUNT = 7, INTER = 0, OFFSET = (LENGTH+INTER)*(COUNT-1)/2; 
 			geometry = new THREE.BoxBufferGeometry( LENGTH, LENGTH, LENGTH );
 			//纹理		
-			var texture = new THREE.TextureLoader().load( 'textures/1.jpg' );
+			var btn = new THREE.TextureLoader().load( 'textures/btnGrid.png' );
+			var mine = new THREE.TextureLoader().load( 'textures/mine.png' );
 			// 绿色
-			material = new THREE.MeshBasicMaterial( { map: texture } );
+			material = new THREE.MeshBasicMaterial( { map: btn } );
 			// material = new THREE.MeshLambertMaterial( { color:0xFFFFFF} );
 			mesh = new THREE.Mesh( geometry, material );
 			// scene.add(mesh);
@@ -120,6 +121,115 @@
 			// initTween();
 			animate();
 		}
+		function initMines(){
+			// var tNum = [];
+	  //       var tMineNum = [];
+	  //       _tNum = [];
+	  //       _tFlag = [];
+	  //       _tBtns = [];
+	  //       _tMine = [];
+	  //       for (var i = 0; i < _iTotal; i++) {
+	  //           tNum.push(i);
+	  //           tMineNum[i] = 0;
+	  //           _tNum[i] = 0;
+	  //           _tFlag[i] = 0;
+	  //           _tBtns[i] = 1;
+	  //           // this._tBtns[i] = 0;
+	  //       };
+   //          for (var i = 0; i < _iMineCount; i++) {
+   //              var iRandom = Math.floor(Math.random() * (tNum.length - 1));
+   //              var iNum = tNum.splice(iRandom, 1);
+   //              tMineNum[iNum] = 1;
+   //          };
+	  //       // this._tileMap.showMines(tMineNum);
+	  //       for (var i = 0; i < _iTotal; i++) {
+	  //           if (tMineNum [i] == 1) {
+	  //               _tMine.push(i);
+	  //               _tNum[i] = -1;
+	  //           }
+	  //       };
+		}
+		function initLabs(){
+
+		}
+		function showGrids(idxNum){
+	 //        var _iRow = this._iRow;
+	 //        var iLabNum = this._tNum [idxNum];
+	 //        if (iLabNum >= 0) {
+	 //            this._tBtns[idxNum] = 0;
+	 //            if (iLabNum == 0) {
+	 //                var iMine = parseInt(idxNum);
+	 //                var iCurLine = Math.floor (iMine / _iRow);
+	 //                var iCurRow = iMine % _iRow;
+	 //                for (var iLine = 0; iLine < 3; iLine++) {
+	 //                    for (var iRow = 0; iRow < 3; iRow++) {
+	 //                        var iRowTemp = iCurRow - 1 + iRow;
+	 //                        var iLineTemp = iCurLine - 1 + iLine;
+	 //                        if (iRowTemp > -1 && iRowTemp < _iRow && iLineTemp > -1 && iLineTemp < this._iLine) {
+	 //                            var idx = iMine + (iRow - 1) + (iLine * _iRow - _iRow);
+	 //                            if (this._tFlag[idx] == 0 && this._tBtns[idx] == 1 && this._tSearch.indexOf(idx) == -1) {
+	 //                                this._tSearch.push(idx);
+	 //                                this.showGrids (idx);
+	 //                            }
+	 //                        }
+	 //                    }
+	 //                }
+	 //            }
+	 //        }
+	    }
+	    function onClickNum(idxNum){
+	    //     var _iRow = this._iRow;
+	    //     var iMine = parseInt(idxNum);
+	    //     var iCurLine = Math.floor (iMine / _iRow);
+	    //     var iCurRow = iMine % _iRow;
+	    //     //统计标记的地雷数量，标错return;
+	    //     var iShowNum = 0;
+	    //     for (var iLine = 0; iLine < 3; iLine++) {
+	    //         for (var iRow = 0; iRow < 3; iRow++) {
+	    //             var iRowTemp = iCurRow - 1 + iRow;
+	    //             var iLineTemp = iCurLine - 1 + iLine;
+	    //             if (iRowTemp > -1 && iRowTemp < _iRow && iLineTemp > -1 && iLineTemp < this._iLine) {
+	    //                 var idx = iMine + (iRow - 1) + (iLine * _iRow - _iRow);
+	    //                 if (this._tFlag[idx] == 1) {
+	    //                     iShowNum++;
+	    //                 }
+	    //             }
+	    //         }
+	    //     }
+	    //     //判断地雷是否均被标记
+	    //     if (this._tNum[idxNum] != iShowNum)
+	    //         return;
+	    //     this.playSound("check");
+	    //     this.setTSearch();
+	    //     //展开地图
+	    //     for (var iLine = 0; iLine < 3; iLine++) {
+	    //         for (var iRow = 0; iRow < 3; iRow++) {
+	    //             var iRowTemp = iCurRow - 1 + iRow;
+	    //             var iLineTemp = iCurLine - 1 + iLine;
+	    //             if (iRowTemp > -1 && iRowTemp < _iRow && iLineTemp > -1 && iLineTemp < this._iLine) {
+	    //                 var idx = iMine + (iRow - 1) + (iLine * _iRow - _iRow);
+	    //                 if (this._tFlag[idx] == 0){
+	    //                     if (this._tNum[idx] == -1){
+	    //                         this._tBtns[idx] = 0;
+	    //                         this.playSound("bomb");
+	    //                         this._tileMap.showRedMine(idx);
+	    //                         this.onEnd();
+	    //                         this._tileMap.strBack = "bomb";
+	    //                         break;
+	    //                     }
+	    //                     if (this._tBtns[idx] == 1){
+	    //                         if (this._tSearch.indexOf(idx) == -1) {
+	    //                             this._tSearch.push(idx);
+	    //                             this.showGrids (idx);
+	    //                         }
+	    //                     }
+	    //                 }
+	    //             }
+	    //         }
+	    //     };
+	    //     this._tileMap.showBtns(this._tBtns);
+	    //     this.showWin();
+	    }
 		init();
     </script>
    <!--  <div>
