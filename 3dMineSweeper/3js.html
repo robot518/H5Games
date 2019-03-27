@@ -11,13 +11,15 @@
 <body>
 	<script>
 		var stats, renderer, camera, scene, light, group, geometry, materials, controls;
+		var btn, mine, empty;
 		function initParas(){
 			materials = [];
 			//纹理		
-			var btn = new THREE.MeshBasicMaterial( { map: new THREE.TextureLoader().load( 'textures/btnGrid.png' ) } );
-			var mine = new THREE.MeshBasicMaterial( { map: new THREE.TextureLoader().load( 'textures/mine.png' ) } );
-			materials.push(btn);
-			materials.push(mine);
+			var grid = new THREE.MeshBasicMaterial( { map: new THREE.TextureLoader().load( 'textures/grid.png' ) } );
+			btn = [ new THREE.Vector2(0, .833), new THREE.Vector2(.33, .833), new THREE.Vector2(.33, 1), new THREE.Vector2(0, 1) ];
+			empty = [ new THREE.Vector2(0, 0), new THREE.Vector2(.33, 0), new THREE.Vector2(.33, .166), new THREE.Vector2(0, .166) ];
+			// var 
+			materials.push(grid);
 		}
 		function initTween(){
 			// new TWEEN.Tween( group.position)
@@ -55,11 +57,18 @@
             // light.position.set(0, 0, 100);
             scene.add(light);
         }
+        function setGrid(geometry, img){
+        	geometry.faceVertexUvs[0][8] = [ img[0], img[1], img[3] ];
+			geometry.faceVertexUvs[0][9] = [ img[1], img[2], img[3] ];
+        }
         // 扫雷格子
 		function initGroup(){
 			group = new THREE.Group();
 			var LENGTH = 10, COUNT = 9, INTER = 0, OFFSET = (LENGTH+INTER)*(COUNT-1)/2; 
-			geometry = new THREE.BoxBufferGeometry( LENGTH, LENGTH, LENGTH );
+			geometry = new THREE.CubeGeometry( LENGTH, LENGTH, LENGTH );
+			// setGrid(geometry, btn);
+			setGrid(geometry, empty);
+
 			mesh = new THREE.Mesh( geometry, materials[0] );
 			mesh.position.set(-OFFSET, OFFSET, 0);
 			group.add(mesh);
@@ -68,7 +77,9 @@
 				var temp = mesh.clone();
 				temp.position.set((LENGTH+INTER)*j-OFFSET, -(LENGTH+INTER)*i+OFFSET, (LENGTH+INTER)*z);
 				group.add(temp);
+				// setGrid(temp.geometry, btn);
 			}
+			// setGrid(mesh.geometry, btn);
 			scene.add( group );
 			window.addEventListener( 'resize', onWindowResize, false );
 		}
@@ -81,8 +92,8 @@
 
 		}
 		function animate() {
-			group.rotation.x += 0.005;
-			group.rotation.y += 0.01;
+			// group.rotation.x += 0.005;
+			// group.rotation.y += 0.01;
 			renderer.render( scene, camera );
 			requestAnimationFrame( animate );
 			// group.rotation.x += 0.01;
@@ -91,6 +102,7 @@
 		}
 		function init(){
 			initParas();
+			initMines();
 			// initStat();
 			initRederer();
 			initCamera();
@@ -109,7 +121,8 @@
 
 	        // 获取选中最近的 Mesh 对象
 	        if (intersects.length != 0 && intersects[0].object instanceof THREE.Mesh) {
-	            intersects[0].object.material = materials[1];
+	            // intersects[0].object.material = materials[1];
+	            setGrid(intersects[0].object.geometry, empty);
 	        } else {
 	            // alert("未选中 Mesh!");
 	        }
@@ -117,8 +130,6 @@
 	    // 获取与射线相交的对象数组
 	    function getIntersects(event) {
 	        event.preventDefault();
-	        console.log("event.clientX:"+event.clientX)
-	        console.log("event.clientY:"+event.clientY)
 
 	        // 声明 raycaster 和 mouse 变量
 	        var raycaster = new THREE.Raycaster();
