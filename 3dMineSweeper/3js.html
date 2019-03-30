@@ -4,9 +4,10 @@
     <title></title>
     <style>canvas { width: 100%; height: 100% }</style>
     <script src="../libs/three.js"></script>
-    <script src='../libs/stats.js'></script>
+    // <script src='../libs/stats.js'></script>
     <script src='../libs/TrackballControls.js'></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/16.3.5/Tween.min.js"></script>
+     // <script src='../libs/VTKLoader.js'></script>
+    // <script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/16.3.5/Tween.min.js"></script>
 </head>
 <body>
 	<script>
@@ -66,37 +67,40 @@
 			group = new THREE.Group();
 			var LENGTH = 10, COUNT = 9, INTER = 0, OFFSET = (LENGTH+INTER)*(COUNT-1)/2; 
 			geometry = new THREE.CubeGeometry( LENGTH, LENGTH, LENGTH );
-			// setGrid(geometry, btn);
-			setGrid(geometry, empty);
+			setGrid(geometry, btn);
+			// setGrid(geometry, empty);
 
 			mesh = new THREE.Mesh( geometry, materials[0] );
 			mesh.position.set(-OFFSET, OFFSET, 0);
 			group.add(mesh);
-			for (var i = 0; i < COUNT; i++) for (var j = 0; j < COUNT; j++) for (var z = 0; z < 1; z++){
-				if (i == 0 && j == 0 && z == 0) continue;
-				var temp = mesh.clone();
-				temp.position.set((LENGTH+INTER)*j-OFFSET, -(LENGTH+INTER)*i+OFFSET, (LENGTH+INTER)*z);
-				group.add(temp);
-				// setGrid(temp.geometry, btn);
-			}
-			// setGrid(mesh.geometry, btn);
+			// for (var i = 0; i < COUNT; i++) for (var j = 0; j < COUNT; j++) for (var z = 0; z < 1; z++){
+			// 	if (i == 0 && j == 0 && z == 0) continue;
+			// 	var temp = mesh.clone();
+			// 	temp.position.set((LENGTH+INTER)*j-OFFSET, -(LENGTH+INTER)*i+OFFSET, (LENGTH+INTER)*z);
+			// 	group.add(temp);
+			// }
 			scene.add( group );
 			window.addEventListener( 'resize', onWindowResize, false );
 		}
+		function initGrid(){
+            var helper = new THREE.GridHelper( 1000, 50 );
+            helper.rotation.x = Math.PI/4;
+            scene.add( helper );
+        }
 		function onWindowResize() {
 
 			camera.aspect = window.innerWidth / window.innerHeight;
 			camera.updateProjectionMatrix();
 
 			renderer.setSize( window.innerWidth, window.innerHeight );
-
+			controls.handleResize();
 		}
 		function animate() {
 			// group.rotation.x += 0.005;
 			// group.rotation.y += 0.01;
 			renderer.render( scene, camera );
 			requestAnimationFrame( animate );
-			// group.rotation.x += 0.01;
+			controls.update();
 			// stats.update();
 			// TWEEN.update();
 		}
@@ -108,6 +112,8 @@
 			initCamera();
 			initScene();
 			// initLight();
+			initControls();
+			initGrid();
 			initGroup();
 			// initTween();
 			animate();
@@ -159,9 +165,18 @@
 
 	    // 初始化轨迹球控件
 	    function initControls() {
-	        // controls = new THREE.TrackballControls(camera, renderer.domElement);
+	        controls = new THREE.TrackballControls(camera, renderer.domElement);
 	        // controls.noRotate = true;
 	        // controls.noPan = true;
+	        controls.rotateSpeed = 5.0;
+			controls.zoomSpeed = 5;
+			controls.panSpeed = 2;
+
+			controls.noZoom = false;
+			controls.noPan = false;
+
+			controls.staticMoving = false;
+			controls.dynamicDampingFactor = 0.3;
 	    }
 		function initMines(){
 			var tNum = [];
