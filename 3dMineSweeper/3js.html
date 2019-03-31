@@ -4,23 +4,21 @@
     <title></title>
     <style>canvas { width: 100%; height: 100% }</style>
     <script src="../libs/three.js"></script>
-    // <script src='../libs/stats.js'></script>
+    <script src='../libs/stats.js'></script>
     <script src='../libs/TrackballControls.js'></script>
-     // <script src='../libs/VTKLoader.js'></script>
-    // <script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/16.3.5/Tween.min.js"></script>
+    <!-- // <script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/16.3.5/Tween.min.js"></script> -->
 </head>
 <body>
 	<script>
 		var stats, renderer, camera, scene, light, group, geometry, materials, controls;
-		var btn, mine, empty;
 		function initParas(){
 			materials = [];
-			//纹理		
-			var grid = new THREE.MeshBasicMaterial( { map: new THREE.TextureLoader().load( 'textures/grid.png' ) } );
-			btn = [ new THREE.Vector2(0, .833), new THREE.Vector2(.33, .833), new THREE.Vector2(.33, 1), new THREE.Vector2(0, 1) ];
-			empty = [ new THREE.Vector2(0, 0), new THREE.Vector2(.33, 0), new THREE.Vector2(.33, .166), new THREE.Vector2(0, .166) ];
-			// var 
-			materials.push(grid);
+			for (var i = 0; i < 5; i++) for (var j = 0; j < 3; j++){
+				var mat = new THREE.MeshBasicMaterial( { map: new THREE.TextureLoader().load( 'textures/grids.png' ) } );
+				mat.map.offset = new THREE.Vector2(0.33*j, 0.8-0.2*i);
+				mat.map.repeat = new THREE.Vector2(.2, .2);
+				materials.push(mat);
+			}
 		}
 		function initTween(){
 			// new TWEEN.Tween( group.position)
@@ -43,7 +41,7 @@
 		function initCamera(){
 			camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 			// camera = new THREE.OrthographicCamera( window.innerWidth / - 2, window.innerWidth / 2, window.innerHeight / 2, window.innerHeight / - 2, 10, 1000 );
-			camera.position.set( 0, 0, 100 );
+			camera.position.set( 0, 0, 200 );
 		}
 		function initScene(){
 			scene = new THREE.Scene();
@@ -58,33 +56,26 @@
             // light.position.set(0, 0, 100);
             scene.add(light);
         }
-        function setGrid(geometry, img){
-        	geometry.faceVertexUvs[0][8] = [ img[0], img[1], img[3] ];
-			geometry.faceVertexUvs[0][9] = [ img[1], img[2], img[3] ];
-        }
         // 扫雷格子
 		function initGroup(){
 			group = new THREE.Group();
 			var LENGTH = 10, COUNT = 9, INTER = 0, OFFSET = (LENGTH+INTER)*(COUNT-1)/2; 
 			geometry = new THREE.CubeGeometry( LENGTH, LENGTH, LENGTH );
-			setGrid(geometry, btn);
-			// setGrid(geometry, empty);
-
 			mesh = new THREE.Mesh( geometry, materials[0] );
 			mesh.position.set(-OFFSET, OFFSET, 0);
 			group.add(mesh);
-			// for (var i = 0; i < COUNT; i++) for (var j = 0; j < COUNT; j++) for (var z = 0; z < 1; z++){
-			// 	if (i == 0 && j == 0 && z == 0) continue;
-			// 	var temp = mesh.clone();
-			// 	temp.position.set((LENGTH+INTER)*j-OFFSET, -(LENGTH+INTER)*i+OFFSET, (LENGTH+INTER)*z);
-			// 	group.add(temp);
-			// }
+			for (var i = 0; i < COUNT; i++) for (var j = 0; j < COUNT; j++) for (var z = 0; z < 1; z++){
+				if (i == 0 && j == 0 && z == 0) continue;
+				var temp = mesh.clone();
+				temp.position.set((LENGTH+INTER)*j-OFFSET, -(LENGTH+INTER)*i+OFFSET, (LENGTH+INTER)*z);
+				group.add(temp);
+			}
 			scene.add( group );
 			window.addEventListener( 'resize', onWindowResize, false );
 		}
 		function initGrid(){
             var helper = new THREE.GridHelper( 1000, 50 );
-            helper.rotation.x = Math.PI/4;
+            helper.rotation.x = Math.PI/2;
             scene.add( helper );
         }
 		function onWindowResize() {
@@ -127,10 +118,7 @@
 
 	        // 获取选中最近的 Mesh 对象
 	        if (intersects.length != 0 && intersects[0].object instanceof THREE.Mesh) {
-	            // intersects[0].object.material = materials[1];
-	            setGrid(intersects[0].object.geometry, empty);
-	        } else {
-	            // alert("未选中 Mesh!");
+	            intersects[0].object.material = materials[2];
 	        }
 	    }
 	    // 获取与射线相交的对象数组
