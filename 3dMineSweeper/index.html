@@ -124,7 +124,7 @@
 			initMines();
 			showBtns(true);
 		}
-		// 鼠标双击触发的方法
+		// 鼠标单击触发的方法
 	    function onMouseClick(event) {
 	        // 获取 raycaster 和所有模型相交的数组，其中的元素按照距离排序，越近的越靠前
 	        var intersects = getIntersects(event);
@@ -162,8 +162,10 @@
 	        var mouse = new THREE.Vector2();
 
 	        // 通过鼠标点击位置,计算出 raycaster 所需点的位置,以屏幕为中心点,范围 -1 到 1
-	        mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-	        mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+	        // mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+	        // mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+	        mouse.x = (event.pageX / window.innerWidth) * 2 - 1;
+	        mouse.y = -(event.pageY / window.innerHeight) * 2 + 1;
 
 	        //通过鼠标点击的位置(二维坐标)和当前相机的矩阵计算出射线位置
 	        raycaster.setFromCamera(mouse, camera);
@@ -280,6 +282,7 @@
 			initGroup();
 			animate();
 			addEventListener('click', onMouseClick, false);
+			addEventListener('touchstart', onMouseClick, false);
 			window.addEventListener( 'resize', onWindowResize, false );
 			onStart();
 			// showBtns();
