@@ -7,16 +7,11 @@
     <script src='js/stats.js'></script>
     <script src='js/TrackballControls.js'></script>
     <script src="js/OrbitControls.js"></script>
-    <script src="js/WebGL.js"></script>
-    <script src="js/CanvasRenderer.js"></script>
-	<script src="js/TweenMax.min.js"></script>
-	<script src="js/Projector.js"></script>
 </head>
 <body>
 	<script>
 		var stats, renderer, camera, scene, light, group, geometry, materials, controls, sound, loader, orbControl;
 		var _tNum, _tBtns, _iTotal, _iRow, _iMineCount, _bWin;
-		var clock = new THREE.Clock(), delta, group2, renderer, t1 = new Date().getTime();
 		function initParas(){
 			materials = []; //0按钮，1地雷，2旗帜，3-11数字0-8，12炸弹，13绿旗，14播放
 			var material = new THREE.MeshBasicMaterial();
@@ -48,11 +43,6 @@
 			renderer.setPixelRatio( window.devicePixelRatio );
 			renderer.setSize( window.innerWidth, window.innerHeight );
 			document.body.appendChild( renderer.domElement );
-
-			renderer2 = new THREE.CanvasRenderer();
-			renderer2.setPixelRatio( window.devicePixelRatio );
-			renderer2.setSize( window.innerWidth, window.innerHeight );
-			document.body.appendChild( renderer2.domElement );
 		}
 		function initCamera(){
 			camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -85,20 +75,20 @@
 			var LENGTH = 10, COUNT = _iRow, INTER = 0, OFFSET = (LENGTH+INTER)*(COUNT-1)/2; 
 			geometry = new THREE.CubeGeometry( LENGTH, LENGTH, LENGTH );
 			mesh = new THREE.Mesh( geometry, materials[0] );
-			mesh.position.set(-OFFSET, OFFSET, 0);
+			mesh.position.set(-OFFSET, OFFSET, -OFFSET);
 			group.add(mesh);
 			for (var i = 0; i < COUNT; i++) for (var j = 0; j < COUNT; j++) for (var z = 0; z < COUNT; z++){
 				if (i == 0 && j == 0 && z == 0) continue;
 				var temp = mesh.clone();
-				temp.position.set((LENGTH+INTER)*j-OFFSET, -(LENGTH+INTER)*i+OFFSET, (LENGTH+INTER)*z);
+				temp.position.set((LENGTH+INTER)*j-OFFSET, -(LENGTH+INTER)*i+OFFSET, (LENGTH+INTER)*z-OFFSET);
 				group.add(temp);
 			}
 
 			//menus
 			var geo = new THREE.CubeGeometry( 20, 20, 20 );
-        	var me = new THREE.Mesh( geo, materials[14] );
-        	group.add(me);
-        	me.position.set(0, -(LENGTH+INTER)*COUNT, (LENGTH+INTER)*COUNT );
+        	var box = new THREE.Mesh( geo, materials[14] );
+        	group.add(box);
+        	box.position.set(0, -(LENGTH+INTER)*COUNT, (LENGTH+INTER)*COUNT );
 
         	scene.add( group );
 		}
@@ -272,72 +262,9 @@
 	    	}
 	    	return true;
 	    }
-	    function showWin () {
-	    	var PI2 = Math.PI * 2;
-			//画点
-			var program = function ( context ) {
-
-			    context.beginPath();
-			    context.arc( 0, 0, 0.5, 0, PI2, true );
-			    context.fill();
-
-			};
-			group2 = new THREE.Group();
-			scene.add( group2 );
-
-			//创建一个球型用作最后的形状
-			var geometry = new THREE.SphereGeometry( 500, 32, 32 );
-			var vl = geometry.vertices.length;
-
-			for ( var i = 0; i < vl; i++ ) {
-			    //为每个点附上材质
-			    var material = new THREE.SpriteCanvasMaterial( {
-			        color: Math.random() * 0x808008 + 0x808080,
-			        program: program
-			    } );
-
-			    var particle = new THREE.Sprite( material );
-			    particle.position.x = 0;
-			    particle.position.y = -500;
-			    particle.position.z = 0;
-			    particle.scale.x = particle.scale.y = Math.random() * 4 + 2;
-			    var timerandom = 1*Math.random();
-				//为每个点加动画
-				TweenMax.to(
-                    particle.position,
-                    timerandom,
-                    {x:geometry.vertices[i].x+(0.5-Math.random())*100,y:geometry.vertices[i].y+(0.5-Math.random())*100,z:geometry.vertices[i].z+Math.random()*100,delay:1.8,} 
-                );
-				TweenMax.to(
-                    particle.position,
-                    timerandom,
-                    {y:'-=1500',z:'300',delay:1.8+timerandom,ease:Power2.easeIn} 
-                );
-			    group2.add(particle);
-			}
-	    }
-	    function fsin(x){     //正弦函数
-			return 50*Math.sin(0.8*x*Math.PI/180);
-		}
-		function render() {
-			delta = 10 * clock.getDelta();
-			var speed = 80;
-			delta = delta < 2 ? delta : 2;
-			var dur = new Date().getTime() - t1; 
-			if (dur < 1800) {
-				var k = 0;
-				group2.traverse(function(child) {
-					if (child.position.y < 0) {
-						child.position.y += delta * speed * Math.random();
-						child.position.x = fsin(child.position.y);
-					}	        
-		    	});
-			}
-			renderer2.render( scene, camera );
-		}
 		function init(){
 			initParas();
-			initStat();
+			// initStat();
 			initRederer();
 			initCamera();
 			initScene();
@@ -346,7 +273,6 @@
 			initOrbControls();
 			// initGrid(); //显示网格
 			initGroup();
-			// showWin();
 			animate();
 			addEventListener('click', onMouseClick, false);
 			window.addEventListener( 'resize', onWindowResize, false );
@@ -356,8 +282,7 @@
 		function animate() {
 			renderer.render( scene, camera );
 			requestAnimationFrame( animate );
-			stats.update();
-			// render();
+			// stats.update();
 		}
 		init();
     </script>
