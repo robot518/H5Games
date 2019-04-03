@@ -142,7 +142,7 @@
 		            	playSound("bomb");
 						obj.material = materials[12];
 		            	_bWin = _bGameOver = true;
-		            } else {
+		            } else if (_tBtns[idx] == 1) {
 		            	showGrids(idx, []);
 		            	showBtns();
 		            	_bWin = _bGameOver = checkWin();
