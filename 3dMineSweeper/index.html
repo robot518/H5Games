@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title></title>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" /> 
+    <title>Smile3DMinesweeper</title>
     <style>canvas { width: 100%; height: 100% }</style>
     <script src="js/three.js"></script>
     <script src='js/stats.js'></script>
@@ -11,7 +12,7 @@
 <body>
 	<script>
 		var stats, renderer, camera, scene, light, group, geometry, materials, controls, sound, loader, orbControl;
-		var _tNum, _tBtns, _iTotal, _iRow, _iMineCount, _bWin;
+		var _tNum, _tBtns, _iTotal, _iRow, _iMineCount, _bWin, _bGameOver;
 		function initParas(){
 			materials = []; //0按钮，1地雷，2旗帜，3-11数字0-8，12炸弹，13绿旗，14播放
 			var material = new THREE.MeshBasicMaterial();
@@ -106,6 +107,10 @@
 
 		}
 		function playSound (s) {
+			if (sound.listener.context.state != 'running'){
+				console.log('重启audioCtx');
+				sound.listener.context.resume();
+			}
 			loader.load( 'audio/'+s+'.mp3', function( buf ) {
 			    sound.setBuffer( buf );
 			    sound.play();
@@ -136,11 +141,11 @@
 		            if (_tNum[idx] == -1){ //地雷
 		            	playSound("bomb");
 						obj.material = materials[12];
-		            	_bWin = true;
+		            	_bWin = _bGameOver = true;
 		            } else {
 		            	showGrids(idx, []);
 		            	showBtns();
-		            	_bWin = checkWin();
+		            	_bWin = _bGameOver = checkWin();
 		            	if (_bWin) playSound("win");
 				    	else playSound("check");
 		            }
@@ -283,6 +288,13 @@
 			renderer.render( scene, camera );
 			requestAnimationFrame( animate );
 			// stats.update();
+			if (_bGameOver){
+				group.position.z += 1;
+				if (group.position.z > 100){
+					group.position.z = 0;
+					_bGameOver = false;
+				}
+			}
 		}
 		init();
     </script>
