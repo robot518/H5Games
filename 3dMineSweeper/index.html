@@ -3,16 +3,37 @@
 <head>
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" /> 
     <title>Smile3DMinesweeper</title>
-    <style>canvas { width: 100%; height: 100% }</style>
+    <style>
+    	canvas { width: 100%; height: 100% }
+    	body {
+				font-family: Monospace;
+				background-color: #000;
+				color: #fff;
+				margin: 0px;
+				overflow: hidden;
+			}
+		#info {
+				color: #000;
+				position: absolute;
+				top: 10px;
+				width: 100%;
+				text-align: center;
+				z-index: 100;
+				display:block;
+			}
+	</style>
     <script src="js/three.js"></script>
     <script src='js/stats.js'></script>
     <script src='js/TrackballControls.js'></script>
     <script src="js/OrbitControls.js"></script>
+    <script src="js/TweenMax.min.js"></script>
 </head>
 <body>
+	<div id="info"> <font size="40">扫雷魔方可翻转，(左键)按住并移动即可</font> </div>
 	<script>
 		var stats, renderer, camera, scene, light, group, geometry, materials, controls, sound, loader, orbControl;
-		var _tNum, _tBtns, _iTotal, _iRow, _iMineCount, _bWin, _bGameOver;
+		var _tNum, _tBtns, _iTotal, _iRow = 9, _iMineCount, _bWin, _bGameOver;
+		var LENGTH = 10, COUNT = _iRow, INTER = 0, OFFSET = (LENGTH+INTER)*(COUNT-1)/2; 
 		function initParas(){
 			materials = []; //0按钮，1地雷，2旗帜，3-11数字0-8，12炸弹，13绿旗，14播放
 			var material = new THREE.MeshBasicMaterial();
@@ -24,7 +45,6 @@
 				materials.push(mat);
 			}
 
-			_iRow = 9;
 			_iTotal = Math.pow(_iRow, 3);
 			_tNum = [];
 			_tBtns = [];
@@ -52,6 +72,8 @@
 		}
 		function initScene(){
 			scene = new THREE.Scene();
+			scene.background = new THREE.Color( 0x2E8B57 );
+			// scene.fog = new THREE.Fog( 0xcce0ff, 500, 10000 );
 		}
 		function initListener () {
 			var listener = new THREE.AudioListener();
@@ -73,7 +95,6 @@
         // 扫雷格子
 		function initGroup(){
 			group = new THREE.Group();
-			var LENGTH = 10, COUNT = _iRow, INTER = 0, OFFSET = (LENGTH+INTER)*(COUNT-1)/2; 
 			geometry = new THREE.CubeGeometry( LENGTH, LENGTH, LENGTH );
 			mesh = new THREE.Mesh( geometry, materials[0] );
 			mesh.position.set(-OFFSET, OFFSET, -OFFSET);
@@ -119,10 +140,9 @@
 		function onStart(){
 			_bWin = false;
 			_tNum = [];
-	        // _tFlag = [];
 	        _tBtns = [];
 			initMines();
-			showBtns(true);
+			showBtns();
 		}
 		// 鼠标单击触发的方法
 	    function onMouseClick(event) {
@@ -141,13 +161,16 @@
 		            if (_tNum[idx] == -1){ //地雷
 		            	playSound("bomb");
 						obj.material = materials[12];
-		            	_bWin = _bGameOver = true;
+		            	_bWin = true;
+		            	showResult();
 		            } else if (_tBtns[idx] == 1) {
-		            	showGrids(idx, []);
+		            	showGrids(idx);
 		            	showBtns();
-		            	_bWin = _bGameOver = checkWin();
-		            	if (_bWin) playSound("win");
-				    	else playSound("check");
+		            	_bWin = checkWin();
+		            	if (_bWin) {
+		            		playSound("win");
+		            		showResult();
+				    	}else playSound("check");
 		            }
 	            }
 	            
@@ -162,8 +185,6 @@
 	        var mouse = new THREE.Vector2();
 
 	        // 通过鼠标点击位置,计算出 raycaster 所需点的位置,以屏幕为中心点,范围 -1 到 1
-	        // mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-	        // mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 	        mouse.x = (event.pageX / window.innerWidth) * 2 - 1;
 	        mouse.y = -(event.pageY / window.innerHeight) * 2 + 1;
 
@@ -204,7 +225,6 @@
 	            	tNum.push(k);
 	            tMineNum[k] = 0;
 	            _tNum[k] = 0;
-	            // _tFlag[k] = 0;
 	            _tBtns[k] = 1;
 	        };
             for (var i = 0; i < _iMineCount; i++) {
@@ -229,7 +249,7 @@
 	            }
 	        };
 		}
-		function showGrids(k, t){
+		function showGrids(k){
 	        var iLabNum = _tNum [k];
 	        if (iLabNum != -1) {
 	            _tBtns[k] = 0;
@@ -242,19 +262,16 @@
 					for (var x = row-1; x < row+2; x++) for (var y = col-1; y < col+2; y++) for (var z = depth-1; z < depth+2; z++) {
 						if (x > -1 && y > -1 && z > -1 && x < _iRow && y < _iRow && z < _iRow){
 							var idx = z * area + x * _iRow + y;
-							if (_tBtns[idx] == 1 && !t.includes(idx)){
-								t.push(idx);
-								showGrids(idx, t);
-							}
+							if (_tBtns[idx] == 1) showGrids(idx);
 						}
 					};
 	            }
 	        }
 	    }
-	    function showBtns (b) {
+	    function showBtns () {
 	    	for (var i = 0; i < _tBtns.length; i++) {
 	    		if (_tBtns[i] == 0) group.children[i].material = materials[3+_tNum[i]];
-	    		else if (b) group.children[i].material = materials[0];
+	    		else group.children[i].material = materials[0];
 	    	};
 	    }
 	    function checkWin () {
@@ -268,6 +285,24 @@
 					if (_tBtns[k] == 1 && _tNum[k] != -1) return false;
 	    	}
 	    	return true;
+	    }
+	    function showResult () {
+	    	var area = _iRow * _iRow;
+	    	var timerandom = 0.5;
+	    	for (var i = 0; i < COUNT; i++) for (var j = 0; j < COUNT; j++) for (var z = 0; z < COUNT; z++){
+	    		var idx = z * area + i * _iRow + j;
+	    		var obj = group.children[idx];
+			    TweenMax.to(
+			        obj.position,
+			        timerandom,
+			        {x:obj.position.x+(0.5-Math.random())*500,y:obj.position.y+(0.5-Math.random())*500,z:obj.position.z+Math.random()*500,delay:0,} 
+			    );
+			    TweenMax.to(
+                    obj.position,
+                    timerandom,
+                    {x:(LENGTH+INTER)*j-OFFSET,y:-(LENGTH+INTER)*i+OFFSET,z:(LENGTH+INTER)*z-OFFSET,delay:.6,ease:Power2.easeIn} 
+                );
+			}
 	    }
 		function init(){
 			initParas();
@@ -291,13 +326,6 @@
 			renderer.render( scene, camera );
 			requestAnimationFrame( animate );
 			// stats.update();
-			if (_bGameOver){
-				group.position.z += 1;
-				if (group.position.z > 100){
-					group.position.z = 0;
-					_bGameOver = false;
-				}
-			}
 		}
 		init();
     </script>
