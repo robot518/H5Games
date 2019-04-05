@@ -1,3 +1,4 @@
+<!-- @author: Smile Chen, https://github.com/SmileChen518/H5-games -->
 <!DOCTYPE html>
 <html>
 <head>
@@ -31,9 +32,9 @@
 <body>
 	<div id="info"> <font size="40">扫雷魔方可翻转，(左键)按住并移动即可</font> </div>
 	<script>
-		var stats, renderer, camera, scene, light, group, geometry, materials, controls, sound, loader, orbControl;
-		var _tNum, _tBtns, _iTotal, _iRow = 9, _iMineCount, _bWin, _bGameOver;
-		var LENGTH = 10, COUNT = _iRow, INTER = 0, OFFSET = (LENGTH+INTER)*(COUNT-1)/2; 
+		var stats, renderer, camera, scene, sound, loader;
+		var materials, group, _tNum, _tBtns, _iTotal, _iMineCount, _bGameOver;
+		var _iRow = 9, LENGTH = 10, OFFSET = LENGTH*(_iRow-1)/2; 
 		function initParas(){
 			materials = []; //0按钮，1地雷，2旗帜，3-11数字0-8，12炸弹，13绿旗，14播放
 			var material = new THREE.MeshBasicMaterial();
@@ -49,7 +50,12 @@
 			_tNum = [];
 			_tBtns = [];
 			_iMineCount = 20;
-			_bWin = false;
+			_bGameOver = false;
+		}
+		function initEvent () {
+			addEventListener('click', onMouseClick, false);
+			addEventListener('touchstart', onMouseClick, false);
+			window.addEventListener( 'resize', onWindowResize, false );
 		}
 		function initStat() {
         	stats = new Stats();
@@ -82,10 +88,16 @@
 			sound.setVolume(0.5);
 			loader = new THREE.AudioLoader();
 		}
+		// 初始化轨迹球控件
+	    function initOrbControls() {
+	        var orbControl = new THREE.OrbitControls(camera, renderer.domElement);
+	        orbControl.minDistance = 25;
+			orbControl.maxDistance = 1000;
+	    }
         function initLight() {
         	// light = new THREE.AmbientLight(0x00FF00);
         	// scene.add(light);
-            light = new THREE.DirectionalLight(0xFFFFFF, 1, 0);
+            var light = new THREE.DirectionalLight(0xFFFFFF, 1, 0);
             light.position.set(0, 0, 1);
             // scene.add(light);
             // light = new THREE.PointLight(0x0000FF);
@@ -99,10 +111,10 @@
 			mesh = new THREE.Mesh( geometry, materials[0] );
 			mesh.position.set(-OFFSET, OFFSET, -OFFSET);
 			group.add(mesh);
-			for (var i = 0; i < COUNT; i++) for (var j = 0; j < COUNT; j++) for (var z = 0; z < COUNT; z++){
+			for (var i = 0; i < _iRow; i++) for (var j = 0; j < _iRow; j++) for (var z = 0; z < _iRow; z++){
 				if (i == 0 && j == 0 && z == 0) continue;
 				var temp = mesh.clone();
-				temp.position.set((LENGTH+INTER)*j-OFFSET, -(LENGTH+INTER)*i+OFFSET, (LENGTH+INTER)*z-OFFSET);
+				temp.position.set(LENGTH*j-OFFSET, -LENGTH*i+OFFSET, LENGTH*z-OFFSET);
 				group.add(temp);
 			}
 
@@ -110,7 +122,7 @@
 			var geo = new THREE.CubeGeometry( 20, 20, 20 );
         	var box = new THREE.Mesh( geo, materials[14] );
         	group.add(box);
-        	box.position.set(0, -(LENGTH+INTER)*COUNT, (LENGTH+INTER)*COUNT );
+        	box.position.set(0, -LENGTH*_iRow, LENGTH*_iRow );
 
         	scene.add( group );
 		}
@@ -137,13 +149,6 @@
 			    sound.play();
 			});
 		}
-		function onStart(){
-			_bWin = false;
-			_tNum = [];
-	        _tBtns = [];
-			initMines();
-			showBtns();
-		}
 		// 鼠标单击触发的方法
 	    function onMouseClick(event) {
 	        // 获取 raycaster 和所有模型相交的数组，其中的元素按照距离排序，越近的越靠前
@@ -157,17 +162,17 @@
 	            if (idx == _iTotal) {
 	            	playSound("click");
 	            	onStart();
-	            } else if (!_bWin) {
+	            } else if (!_bGameOver) {
 		            if (_tNum[idx] == -1){ //地雷
 		            	playSound("bomb");
 						obj.material = materials[12];
-		            	_bWin = true;
+		            	_bGameOver = true;
 		            	showResult();
 		            } else if (_tBtns[idx] == 1) {
 		            	showGrids(idx);
 		            	showBtns();
-		            	_bWin = checkWin();
-		            	if (_bWin) {
+		            	_bGameOver = checkWin();
+		            	if (_bGameOver) {
 		            		playSound("win");
 		            		showResult();
 				    	}else playSound("check");
@@ -204,13 +209,6 @@
 
 	        //返回选中的对象
 	        return intersects;
-	    }
-
-	    // 初始化轨迹球控件
-	    function initOrbControls() {
-	        orbControl = new THREE.OrbitControls(camera, renderer.domElement);
-	        orbControl.minDistance = 25;
-			orbControl.maxDistance = 1000;
 	    }
 		function initMines(){
 			var tNum = [];
@@ -289,7 +287,7 @@
 	    function showResult () {
 	    	var area = _iRow * _iRow;
 	    	var timerandom = 0.5;
-	    	for (var i = 0; i < COUNT; i++) for (var j = 0; j < COUNT; j++) for (var z = 0; z < COUNT; z++){
+	    	for (var i = 0; i < _iRow; i++) for (var j = 0; j < _iRow; j++) for (var z = 0; z < _iRow; z++){
 	    		var idx = z * area + i * _iRow + j;
 	    		var obj = group.children[idx];
 			    TweenMax.to(
@@ -300,12 +298,20 @@
 			    TweenMax.to(
                     obj.position,
                     timerandom,
-                    {x:(LENGTH+INTER)*j-OFFSET,y:-(LENGTH+INTER)*i+OFFSET,z:(LENGTH+INTER)*z-OFFSET,delay:.6,ease:Power2.easeIn} 
+                    {x:LENGTH*j-OFFSET,y:-LENGTH*i+OFFSET,z:LENGTH*z-OFFSET,delay:.6,ease:Power2.easeIn} 
                 );
 			}
 	    }
+	    function onStart(){
+			_bGameOver = false;
+			_tNum = [];
+	        _tBtns = [];
+			initMines();
+			showBtns();
+		}
 		function init(){
 			initParas();
+			initEvent();
 			// initStat();
 			initRederer();
 			initCamera();
@@ -316,11 +322,7 @@
 			// initGrid(); //显示网格
 			initGroup();
 			animate();
-			addEventListener('click', onMouseClick, false);
-			addEventListener('touchstart', onMouseClick, false);
-			window.addEventListener( 'resize', onWindowResize, false );
 			onStart();
-			// showBtns();
 		}
 		function animate() {
 			renderer.render( scene, camera );
