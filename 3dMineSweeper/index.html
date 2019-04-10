@@ -190,8 +190,16 @@
 	        var mouse = new THREE.Vector2();
 
 	        // 通过鼠标点击位置,计算出 raycaster 所需点的位置,以屏幕为中心点,范围 -1 到 1
-	        mouse.x = (event.pageX / window.innerWidth) * 2 - 1;
-	        mouse.y = -(event.pageY / window.innerHeight) * 2 + 1;
+	        var posX = event.clientX, posY = event.clientY;
+	        var u = navigator.userAgent;
+			// var isAndroid = u.indexOf('Android') > -1 || u.indexOf('Adr') > -1; //android终端
+			var isiOS = !!u.match(/\(i[^;]+;( U;)? CPU.+Mac OS X/); //ios终端
+			if (isiOS){
+				posX = event.pageX;
+				posY = event.pageY;
+			}
+			mouse.x = (posX / window.innerWidth) * 2 - 1;
+	        mouse.y = -(posY / window.innerHeight) * 2 + 1;
 
 	        //通过鼠标点击的位置(二维坐标)和当前相机的矩阵计算出射线位置
 	        raycaster.setFromCamera(mouse, camera);
