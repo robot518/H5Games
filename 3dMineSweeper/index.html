@@ -268,7 +268,7 @@
 					for (var x = row-1; x < row+2; x++) for (var y = col-1; y < col+2; y++) for (var z = depth-1; z < depth+2; z++) {
 						if (x == 0 || y == 0 || z == 0 || x == _iRow-1 || y == _iRow-1 || z == _iRow-1){
 							var idx = z * area + x * _iRow + y;
-							if (_tBtns[idx] == 1) showGrids(idx);
+							if (idx >= 0 && idx < _iTotal && _tBtns[idx] == 1) showGrids(idx);
 						}
 					};
 	            }
