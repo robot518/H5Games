@@ -1,0 +1,343 @@
+<!-- @author: Smile Chen, https://github.com/SmileChen518/H5-games -->
+<!DOCTYPE html>
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" /> 
+    <title>Smile3DMinesweeper</title>
+    <style>
+    	canvas { width: 100%; height: 100% }
+    	body {
+				font-family: Monospace;
+				background-color: #000;
+				color: #fff;
+				margin: 0px;
+				overflow: hidden;
+			}
+		#info {
+				color: #000;
+				position: absolute;
+				top: 10px;
+				width: 100%;
+				text-align: center;
+				z-index: 100;
+				display:block;
+			}
+	</style>
+    <script src="js/three.js"></script>
+    <script src='js/stats.js'></script>
+    <script src='js/TrackballControls.js'></script>
+    <script src="js/OrbitControls.js"></script>
+    <script src="js/TweenMax.min.js"></script>
+</head>
+<body>
+	<div id="info"> <font size="40">数独</font> </div>
+	<script>
+		var stats, renderer, camera, scene, sound, loader;
+		var materials, group, _tNum, _tBtns, _iTotal, _iMineCount, _bGameOver;
+		var _iRow = 9, LENGTH = 10, OFFSET = LENGTH*(_iRow-1)/2; 
+		function initParas(){
+			materials = []; //0按钮，1地雷，2旗帜，3-11数字0-8，12炸弹，13绿旗，14播放
+			var material = new THREE.MeshBasicMaterial();
+			for (var i = 0; i < 5; i++) for (var j = 0; j < 3; j++){
+				var mat = material.clone();
+				mat.map = new THREE.TextureLoader().load( 'textures/grids.png' );
+				mat.map.offset = new THREE.Vector2(0.33*j, 0.8-0.2*i);
+				mat.map.repeat = new THREE.Vector2(.33, .2);
+				materials.push(mat);
+			}
+
+			_iTotal = Math.pow(_iRow, 3);
+			_tNum = [];
+			_tBtns = [];
+			_iMineCount = 40;
+			_bGameOver = false;
+		}
+		function initEvent () {
+			addEventListener('click', onMouseClick, false);
+			addEventListener('touchstart', onMouseClick, false);
+			window.addEventListener( 'resize', onWindowResize, false );
+		}
+		function initStat() {
+        	stats = new Stats();
+			stats.setMode(0); // 0: fps, 1: ms
+			stats.domElement.style.position = 'absolute';
+			stats.domElement.style.left = '0px';
+			stats.domElement.style.top = '0px';
+			document.body.appendChild( stats.domElement );
+        }
+		function initRederer(){
+			renderer = new THREE.WebGLRenderer( { antialias: true } );
+			renderer.setPixelRatio( window.devicePixelRatio );
+			renderer.setSize( window.innerWidth, window.innerHeight );
+			document.body.appendChild( renderer.domElement );
+		}
+		function initCamera(){
+			camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+			// camera = new THREE.OrthographicCamera( window.innerWidth / - 2, window.innerWidth / 2, window.innerHeight / 2, window.innerHeight / - 2, 10, 1000 );
+			camera.position.set( 0, 0, 200 );
+		}
+		function initScene(){
+			scene = new THREE.Scene();
+			scene.background = new THREE.Color( 0x2E8B57 );
+			// scene.fog = new THREE.Fog( 0xcce0ff, 500, 10000 );
+		}
+		function initListener () {
+			var listener = new THREE.AudioListener();
+			camera.add(listener);
+			sound = new THREE.Audio(listener);
+			sound.setVolume(0.5);
+			loader = new THREE.AudioLoader();
+		}
+		// 初始化轨迹球控件
+	    function initOrbControls() {
+	        var orbControl = new THREE.OrbitControls(camera, renderer.domElement);
+	        orbControl.minDistance = 25;
+			orbControl.maxDistance = 1000;
+	    }
+        function initLight() {
+        	// light = new THREE.AmbientLight(0x00FF00);
+        	// scene.add(light);
+            var light = new THREE.DirectionalLight(0xFFFFFF, 1, 0);
+            light.position.set(0, 0, 1);
+            // scene.add(light);
+            // light = new THREE.PointLight(0x0000FF);
+            // light.position.set(0, 0, 100);
+            scene.add(light);
+        }
+        // 扫雷格子
+		function initGroup(){
+			group = new THREE.Group();
+			geometry = new THREE.CubeGeometry( LENGTH, LENGTH, LENGTH );
+			mesh = new THREE.Mesh( geometry, materials[0] );
+			mesh.position.set(-OFFSET, OFFSET, -OFFSET);
+			group.add(mesh);
+			for (var i = 0; i < _iRow; i++) for (var j = 0; j < _iRow; j++) for (var z = 0; z < _iRow; z++){
+				if (i == 0 && j == 0 && z == 0) continue;
+				var temp = mesh.clone();
+				temp.position.set(LENGTH*j-OFFSET, -LENGTH*i+OFFSET, LENGTH*z-OFFSET);
+				group.add(temp);
+			}
+
+			//menus
+			var geo = new THREE.CubeGeometry( 20, 20, 20 );
+        	var box = new THREE.Mesh( geo, materials[14] );
+        	group.add(box);
+        	box.position.set(0, -LENGTH*_iRow, LENGTH*_iRow );
+
+        	scene.add( group );
+		}
+		function initGrid(){
+            var helper = new THREE.GridHelper( 1000, 50 );
+            helper.rotation.x = Math.PI/2;
+            scene.add( helper );
+        }
+		function onWindowResize() {
+
+			camera.aspect = window.innerWidth / window.innerHeight;
+			camera.updateProjectionMatrix();
+
+			renderer.setSize( window.innerWidth, window.innerHeight );
+
+		}
+		function playSound (s) {
+			if (sound.listener.context.state != 'running'){
+				console.log('重启audioCtx');
+				sound.listener.context.resume();
+			}
+			loader.load( 'audio/'+s+'.mp3', function( buf ) {
+			    sound.setBuffer( buf );
+			    sound.play();
+			});
+		}
+		// 鼠标单击触发的方法
+	    function onMouseClick(event) {
+	        // 获取 raycaster 和所有模型相交的数组，其中的元素按照距离排序，越近的越靠前
+	        var intersects = getIntersects(event);
+
+	        // 获取选中最近的 Mesh 对象
+	        if (intersects.length != 0 && intersects[0].object instanceof THREE.Mesh) {
+	        	var obj = intersects[0].object;
+	            var idx = group.children.indexOf(obj);
+	            // console.log("idx = ", idx);
+	            if (idx == _iTotal) {
+	            	playSound("click");
+	            	onStart();
+	            } else if (!_bGameOver) {
+		            if (_tNum[idx] == -1){ //地雷
+		            	playSound("bomb");
+						obj.material = materials[12];
+		            	_bGameOver = true;
+		            	showResult();
+		            } else if (_tBtns[idx] == 1) {
+		            	showGrids(idx);
+		            	showBtns();
+		            	_bGameOver = checkWin();
+		            	if (_bGameOver) {
+		            		playSound("win");
+		            		showResult();
+				    	}else playSound("check");
+		            }
+	            }
+	            
+	        }
+	    }
+	    // 获取与射线相交的对象数组
+	    function getIntersects(event) {
+	        event.preventDefault();
+
+	        // 声明 raycaster 和 mouse 变量
+	        var raycaster = new THREE.Raycaster();
+	        var mouse = new THREE.Vector2();
+
+	        // 通过鼠标点击位置,计算出 raycaster 所需点的位置,以屏幕为中心点,范围 -1 到 1
+	        var posX = event.clientX, posY = event.clientY;
+	        var u = navigator.userAgent;
+			// var isAndroid = u.indexOf('Android') > -1 || u.indexOf('Adr') > -1; //android终端
+			var isiOS = !!u.match(/\(i[^;]+;( U;)? CPU.+Mac OS X/); //ios终端
+			if (isiOS){
+				posX = event.pageX;
+				posY = event.pageY;
+			}
+			mouse.x = (posX / window.innerWidth) * 2 - 1;
+	        mouse.y = -(posY / window.innerHeight) * 2 + 1;
+
+	        //通过鼠标点击的位置(二维坐标)和当前相机的矩阵计算出射线位置
+	        raycaster.setFromCamera(mouse, camera);
+
+	        //获取group下的mesh
+	        var scensObjs = [];
+		    scene.children.forEach(child => {
+			    for (var i = 0; i < child.children.length; i++) {
+			      var obj=child.children[i];
+			      scensObjs.push(obj);
+			    }
+		    });
+		    // 获取与射线相交的对象数组，其中的元素按照距离排序，越近的越靠前
+	        var intersects = raycaster.intersectObjects(scensObjs);
+
+	        //返回选中的对象
+	        return intersects;
+	    }
+		function initMines(){
+			var tNum = [];
+	        var tMineNum = [];
+	        var area = _iRow*_iRow;
+	        for (var k = 0; k < _iTotal; k++) {
+	        	var depth = Math.floor(k / area);
+				var left = k % area;
+				var col = left % _iRow;
+				var row = Math.floor(left / _iRow);
+				if (depth == 0 || depth == _iRow-1 || row == 0 || row == _iRow-1 || col == 0 || col == _iRow-1)
+	            	tNum.push(k);
+	            tMineNum[k] = 0;
+	            _tNum[k] = 0;
+	            _tBtns[k] = 1;
+	        };
+            for (var i = 0; i < _iMineCount; i++) {
+                var iRandom = Math.floor(Math.random() * (tNum.length - 1));
+                var iNum = tNum.splice(iRandom, 1);
+                tMineNum[iNum] = 1;
+            };
+	        for (var k = 0; k < _iTotal; k++) {
+	            if (tMineNum [k] == 1) {
+	                _tNum[k] = -1;
+	                var area = _iRow*_iRow;
+					var depth = Math.floor(k / area);
+					var left = k % area;
+					var col = left % _iRow;
+					var row = Math.floor(left / _iRow);
+					for (var x = row-1; x < row+2; x++) for (var y = col-1; y < col+2; y++) for (var z = depth-1; z < depth+2; z++) {
+						if (x > -1 && y > -1 && z > -1 && x < _iRow && y < _iRow && z < _iRow){
+							var idx = z * area + x * _iRow + y;
+							if (_tNum[idx] != -1 && _tNum[idx] < 8) _tNum[idx]++; //超过8的当8处理
+						}
+					};
+	            }
+	        };
+		}
+		function showGrids(k){
+	        var iLabNum = _tNum [k];
+	        if (iLabNum != -1) {
+	            _tBtns[k] = 0;
+	            if (iLabNum == 0) {
+	            	var area = _iRow*_iRow;
+					var depth = Math.floor(k / area);
+					var left = k % area;
+					var col = left % _iRow;
+					var row = Math.floor(left / _iRow);
+					for (var x = row-1; x < row+2; x++) for (var y = col-1; y < col+2; y++) for (var z = depth-1; z < depth+2; z++) {
+						if (x == 0 || y == 0 || z == 0 || x == _iRow-1 || y == _iRow-1 || z == _iRow-1){
+							var idx = z * area + x * _iRow + y;
+							if (idx >= 0 && idx < _iTotal && _tBtns[idx] == 1) showGrids(idx);
+						}
+					};
+	            }
+	        }
+	    }
+	    function showBtns () {
+	    	for (var i = 0; i < _tBtns.length; i++) {
+	    		if (_tBtns[i] == 0) group.children[i].material = materials[3+_tNum[i]];
+	    		else group.children[i].material = materials[0];
+	    	};
+	    }
+	    function checkWin () {
+	    	var area = _iRow * _iRow;
+	    	for (var k = 0; k < _tBtns.length; k++) {
+	    		var depth = Math.floor(k / area);
+				var left = k % area;
+				var col = left % _iRow;
+				var row = Math.floor(left / _iRow);
+				if (depth == 0 || depth == _iRow-1 || row == 0 || row == _iRow-1 || col == 0 || col == _iRow-1)
+					if (_tBtns[k] == 1 && _tNum[k] != -1) return false;
+	    	}
+	    	return true;
+	    }
+	    function showResult () {
+	    	var area = _iRow * _iRow;
+	    	var timerandom = 0.5;
+	    	for (var i = 0; i < _iRow; i++) for (var j = 0; j < _iRow; j++) for (var z = 0; z < _iRow; z++){
+	    		var idx = z * area + i * _iRow + j;
+	    		var obj = group.children[idx];
+			    TweenMax.to(
+			        obj.position,
+			        timerandom,
+			        {x:obj.position.x+(0.5-Math.random())*500,y:obj.position.y+(0.5-Math.random())*500,z:obj.position.z+Math.random()*500,delay:0,} 
+			    );
+			    TweenMax.to(
+                    obj.position,
+                    timerandom,
+                    {x:LENGTH*j-OFFSET,y:-LENGTH*i+OFFSET,z:LENGTH*z-OFFSET,delay:.6,ease:Power2.easeIn} 
+                );
+			}
+	    }
+	    function onStart(){
+			_bGameOver = false;
+			_tNum = [];
+	        _tBtns = [];
+			initMines();
+			showBtns();
+		}
+		function init(){
+			initParas();
+			initEvent();
+			// initStat();
+			initRederer();
+			initCamera();
+			initScene();
+			initListener();
+			// initLight();
+			initOrbControls();
+			// initGrid(); //显示网格
+			// initGroup();
+			animate();
+			// onStart();
+		}
+		function animate() {
+			renderer.render( scene, camera );
+			requestAnimationFrame( animate );
+			// stats.update();
+		}
+		init();
+    </script>
+</body>
+</html>
