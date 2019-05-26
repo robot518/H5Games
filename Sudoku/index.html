@@ -3,7 +3,7 @@
 <html>
 <head>
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" /> 
-    <title>Smile3DMinesweeper</title>
+    <title>Sudoku</title>
     <style>
     	canvas { width: 100%; height: 100% }
     	body {
@@ -33,10 +33,11 @@
 	<div id="info"> <font size="40">数独</font> </div>
 	<script>
 		var stats, renderer, camera, scene, sound, loader;
-		var materials, group, _tNum, _tBtns, _iTotal, _iMineCount, _bGameOver;
-		var _iRow = 9, LENGTH = 10, OFFSET = LENGTH*(_iRow-1)/2; 
+		var materials, group, preObj;
+		var _iRow = 9, _iTotal, _tNums, _bGameOver, _tNull;
+		var LENGTH = 10, OFFSET = LENGTH*(_iRow-1)/2; 
 		function initParas(){
-			materials = []; //0按钮，1地雷，2旗帜，3-11数字0-8，12炸弹，13绿旗，14播放
+			materials = []; //0按钮，1地雷，2旗帜，3-12数字0-9，13绿旗，14播放
 			var material = new THREE.MeshBasicMaterial();
 			for (var i = 0; i < 5; i++) for (var j = 0; j < 3; j++){
 				var mat = material.clone();
@@ -46,10 +47,9 @@
 				materials.push(mat);
 			}
 
-			_iTotal = Math.pow(_iRow, 3);
-			_tNum = [];
-			_tBtns = [];
-			_iMineCount = 40;
+			_iTotal = Math.pow(_iRow, 2);
+			_tNums = [];
+			_tNull = [];
 			_bGameOver = false;
 		}
 		function initEvent () {
@@ -111,7 +111,7 @@
 			mesh = new THREE.Mesh( geometry, materials[0] );
 			mesh.position.set(-OFFSET, OFFSET, -OFFSET);
 			group.add(mesh);
-			for (var i = 0; i < _iRow; i++) for (var j = 0; j < _iRow; j++) for (var z = 0; z < _iRow; z++){
+			for (var i = 0; i < _iRow; i++) for (var j = 0; j < _iRow; j++) for (var z = 0; z < 1; z++){
 				if (i == 0 && j == 0 && z == 0) continue;
 				var temp = mesh.clone();
 				temp.position.set(LENGTH*j-OFFSET, -LENGTH*i+OFFSET, LENGTH*z-OFFSET);
@@ -122,7 +122,15 @@
 			var geo = new THREE.CubeGeometry( 20, 20, 20 );
         	var box = new THREE.Mesh( geo, materials[14] );
         	group.add(box);
-        	box.position.set(0, -LENGTH*_iRow, LENGTH*_iRow );
+        	box.position.set(2*OFFSET, 0, -OFFSET );
+
+        	//nums
+        	for (var i = 0; i < 9; i++) {
+        		var temp = mesh.clone();
+        		temp.position.set(-2*OFFSET, -LENGTH*i+OFFSET, -OFFSET);
+        		temp.material = materials[4+i];
+				group.add(temp);
+        	};
 
         	scene.add( group );
 		}
@@ -163,20 +171,18 @@
 	            	playSound("click");
 	            	onStart();
 	            } else if (!_bGameOver) {
-		            if (_tNum[idx] == -1){ //地雷
-		            	playSound("bomb");
-						obj.material = materials[12];
-		            	_bGameOver = true;
-		            	showResult();
-		            } else if (_tBtns[idx] == 1) {
-		            	showGrids(idx);
-		            	showBtns();
-		            	_bGameOver = checkWin();
-		            	if (_bGameOver) {
-		            		playSound("win");
-		            		showResult();
-				    	}else playSound("check");
-		            }
+	            	if (idx > _iTotal){
+	            		playSound("click");
+	            		if (preObj) preObj.material.color = new THREE.Color( 0xffffff );
+	            		obj.material.color = new THREE.Color( 0x888888 );
+	            		preObj = obj;
+	            	}else if (preObj != null && _tNull.indexOf(idx) != -1){
+	            		obj.material = preObj.material;
+	            		_tNums[Math.floor(idx/_iRow)][idx%_iRow] = materials.indexOf(obj.material)-3;
+	            		var b = checkWin();
+	            		if (b) playSound("win");
+	            		else playSound("check");
+	            	}
 	            }
 	            
 	        }
@@ -218,78 +224,53 @@
 	        //返回选中的对象
 	        return intersects;
 	    }
-		function initMines(){
-			var tNum = [];
-	        var tMineNum = [];
-	        var area = _iRow*_iRow;
-	        for (var k = 0; k < _iTotal; k++) {
-	        	var depth = Math.floor(k / area);
-				var left = k % area;
-				var col = left % _iRow;
-				var row = Math.floor(left / _iRow);
-				if (depth == 0 || depth == _iRow-1 || row == 0 || row == _iRow-1 || col == 0 || col == _iRow-1)
-	            	tNum.push(k);
-	            tMineNum[k] = 0;
-	            _tNum[k] = 0;
-	            _tBtns[k] = 1;
-	        };
-            for (var i = 0; i < _iMineCount; i++) {
-                var iRandom = Math.floor(Math.random() * (tNum.length - 1));
-                var iNum = tNum.splice(iRandom, 1);
-                tMineNum[iNum] = 1;
-            };
-	        for (var k = 0; k < _iTotal; k++) {
-	            if (tMineNum [k] == 1) {
-	                _tNum[k] = -1;
-	                var area = _iRow*_iRow;
-					var depth = Math.floor(k / area);
-					var left = k % area;
-					var col = left % _iRow;
-					var row = Math.floor(left / _iRow);
-					for (var x = row-1; x < row+2; x++) for (var y = col-1; y < col+2; y++) for (var z = depth-1; z < depth+2; z++) {
-						if (x > -1 && y > -1 && z > -1 && x < _iRow && y < _iRow && z < _iRow){
-							var idx = z * area + x * _iRow + y;
-							if (_tNum[idx] != -1 && _tNum[idx] < 8) _tNum[idx]++; //超过8的当8处理
-						}
-					};
-	            }
-	        };
+		function initNums(){
+			var list = [];
+			for(var i = 0, l=0; i < 9; i++){
+				list[i] = [];
+				for (var j = l; j < l+9; j++) {
+					var k = j > 8 ? j-9 : j;
+					list[i].push(k+1);
+				};
+				l = l+3 > 8 ? Math.floor((i+1)/3) : l+3;
+			}
+			var rand = new Array(0,1,2,3,4,5,6,7,8).sort((a,b)=>{return Math.random()>.5?-1:1});
+			for (var i = 0; i < 9; i++) for (var j = 0; j < 9; j++) {
+				_tNums[i].push(list[i][j]);
+			};
+			for (var i = 0; i < _iRow; i++) {
+				var tmp = [0,1,2,3,4,5,6,7,8];
+				for (var j = 0, cnt = Math.floor(Math.random()*2); j < cnt; j++) {
+					var rand = Math.floor(Math.random()*(tmp.length-1));
+					var idx = tmp.splice(rand, 1);
+					_tNums[i][idx] = 0;
+					_tNull.push(parseInt(i*_iRow)+parseInt(idx));
+				};
+			}
 		}
-		function showGrids(k){
-	        var iLabNum = _tNum [k];
-	        if (iLabNum != -1) {
-	            _tBtns[k] = 0;
-	            if (iLabNum == 0) {
-	            	var area = _iRow*_iRow;
-					var depth = Math.floor(k / area);
-					var left = k % area;
-					var col = left % _iRow;
-					var row = Math.floor(left / _iRow);
-					for (var x = row-1; x < row+2; x++) for (var y = col-1; y < col+2; y++) for (var z = depth-1; z < depth+2; z++) {
-						if (x == 0 || y == 0 || z == 0 || x == _iRow-1 || y == _iRow-1 || z == _iRow-1){
-							var idx = z * area + x * _iRow + y;
-							if (idx >= 0 && idx < _iTotal && _tBtns[idx] == 1) showGrids(idx);
-						}
-					};
-	            }
-	        }
-	    }
-	    function showBtns () {
-	    	for (var i = 0; i < _tBtns.length; i++) {
-	    		if (_tBtns[i] == 0) group.children[i].material = materials[3+_tNum[i]];
-	    		else group.children[i].material = materials[0];
-	    	};
-	    }
+		function initGridShow () {
+			for (var i = 0; i < _iTotal; i++) {
+				var row = Math.floor(i/_iRow);
+				var col = i%_iRow;
+				group.children[i].material = materials[3+_tNums[row][col]];
+			};
+		}
 	    function checkWin () {
-	    	var area = _iRow * _iRow;
-	    	for (var k = 0; k < _tBtns.length; k++) {
-	    		var depth = Math.floor(k / area);
-				var left = k % area;
-				var col = left % _iRow;
-				var row = Math.floor(left / _iRow);
-				if (depth == 0 || depth == _iRow-1 || row == 0 || row == _iRow-1 || col == 0 || col == _iRow-1)
-					if (_tBtns[k] == 1 && _tNum[k] != -1) return false;
-	    	}
+	    	var r = [0,0,0,0,0,0,0,0,0];
+	    	var c = [0,0,0,0,0,0,0,0,0];
+	    	var b = [0,0,0,0,0,0,0,0,0];
+	    	for (var i = 0; i < _iRow; i++) {
+	    		for (var j = 0; j < _iRow; j++) {
+	    			var num = _tNums[i][j];
+	    			if (num == 0) return false;
+	    			var tmp = 1 << num;
+	    			var idx = 3*Math.floor(i/3)+Math.floor(j/3);
+	    			if ((tmp & r[i]) == tmp || (tmp & c[j]) == tmp || (tmp & b[idx]) == tmp) return false;
+	    			r[i] |= tmp;
+	    			c[j] |= tmp;
+	    			b[idx] |= tmp;
+		    	};
+		    }
 	    	return true;
 	    }
 	    function showResult () {
@@ -312,10 +293,12 @@
 	    }
 	    function onStart(){
 			_bGameOver = false;
-			_tNum = [];
-	        _tBtns = [];
-			initMines();
-			showBtns();
+			for (var i = 0; i < 9; i++) {
+				_tNums[i] = [];
+			};
+			_tNull = [];
+			initNums();
+			initGridShow();
 		}
 		function init(){
 			initParas();
@@ -328,9 +311,9 @@
 			// initLight();
 			initOrbControls();
 			// initGrid(); //显示网格
-			// initGroup();
+			initGroup();
 			animate();
-			// onStart();
+			onStart();
 		}
 		function animate() {
 			renderer.render( scene, camera );
