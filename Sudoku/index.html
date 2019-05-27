@@ -33,7 +33,7 @@
 	<div id="info"> <font size="40">数独</font> </div>
 	<script>
 		var stats, renderer, camera, scene, sound, loader;
-		var materials, group, preObj;
+		var materials, group, preObj, gHelp;
 		var _iRow = 9, _iTotal, _tNums, _bGameOver, _tNull;
 		var LENGTH = 10, OFFSET = LENGTH*(_iRow-1)/2; 
 		function initParas(){
@@ -72,9 +72,9 @@
 			document.body.appendChild( renderer.domElement );
 		}
 		function initCamera(){
-			camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-			// camera = new THREE.OrthographicCamera( window.innerWidth / - 2, window.innerWidth / 2, window.innerHeight / 2, window.innerHeight / - 2, 10, 1000 );
-			camera.position.set( 0, 0, 200 );
+			// camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+			camera = new THREE.OrthographicCamera( window.innerWidth / - 5, window.innerWidth / 5, window.innerHeight / 5, window.innerHeight / - 5, 10, 1000 );
+			camera.position.set( 0, 0, 100 );
 		}
 		function initScene(){
 			scene = new THREE.Scene();
@@ -104,35 +104,57 @@
             // light.position.set(0, 0, 100);
             scene.add(light);
         }
-        // 扫雷格子
+        // 格子
 		function initGroup(){
 			group = new THREE.Group();
+			gHelp = new THREE.Group();
 			geometry = new THREE.CubeGeometry( LENGTH, LENGTH, LENGTH );
 			mesh = new THREE.Mesh( geometry, materials[0] );
 			mesh.position.set(-OFFSET, OFFSET, -OFFSET);
 			group.add(mesh);
+			var boxHelp = new THREE.BoxHelper(mesh, 0xFF0000);
+        	gHelp.add(boxHelp);
 			for (var i = 0; i < _iRow; i++) for (var j = 0; j < _iRow; j++) for (var z = 0; z < 1; z++){
 				if (i == 0 && j == 0 && z == 0) continue;
 				var temp = mesh.clone();
 				temp.position.set(LENGTH*j-OFFSET, -LENGTH*i+OFFSET, LENGTH*z-OFFSET);
 				group.add(temp);
+				boxHelp = new THREE.BoxHelper(temp, 0xFF0000);
+	        	gHelp.add(boxHelp);
 			}
-
+			var PY = 18;
 			//menus
 			var geo = new THREE.CubeGeometry( 20, 20, 20 );
         	var box = new THREE.Mesh( geo, materials[14] );
         	group.add(box);
-        	box.position.set(2*OFFSET, 0, -OFFSET );
-
+        	box.position.set(-30, OFFSET+PY, -OFFSET );
         	//nums
         	for (var i = 0; i < 9; i++) {
         		var temp = mesh.clone();
-        		temp.position.set(-2*OFFSET, -LENGTH*i+OFFSET, -OFFSET);
+        		temp.position.set(LENGTH*i-OFFSET, -OFFSET-PY, -OFFSET);
         		temp.material = materials[4+i];
 				group.add(temp);
         	};
 
         	scene.add( group );
+        	scene.add(gHelp);
+		}
+		// 3*3网格
+		function initLines () {
+			var mat = new THREE.LineBasicMaterial({color: 0x000000, linewidth: 4})
+			var geo = new THREE.Geometry();
+			geo.vertices.push(new THREE.Vector3(-OFFSET-LENGTH/2, OFFSET-2.5*LENGTH, -OFFSET+LENGTH/2), new THREE.Vector3(OFFSET+LENGTH/2, OFFSET-2.5*LENGTH, -OFFSET+LENGTH/2));
+			for (var i = 0; i < 2; i++) {
+				var line = new THREE.Line(geo, mat);
+				line.position.y = OFFSET-4*LENGTH-3*LENGTH*i;
+				scene.add(line);
+
+				var line2 = new THREE.Line(geo, mat);
+				line2.position.y = OFFSET-4*LENGTH;
+				line2.rotation.z = 90 * Math.PI / 180;
+				if (i == 1) line2.position.x = OFFSET+LENGTH/2-1.5*LENGTH;
+				scene.add(line2);
+			};
 		}
 		function initGrid(){
             var helper = new THREE.GridHelper( 1000, 50 );
@@ -180,8 +202,11 @@
 	            		obj.material = preObj.material;
 	            		_tNums[Math.floor(idx/_iRow)][idx%_iRow] = materials.indexOf(obj.material)-3;
 	            		var b = checkWin();
-	            		if (b) playSound("win");
-	            		else playSound("check");
+	            		if (b) {
+	            			playSound("win");
+							showResult();
+							_bGameOver = true;
+	            		} else playSound("check");
 	            	}
 	            }
 	            
@@ -225,22 +250,18 @@
 	        return intersects;
 	    }
 		function initNums(){
-			var list = [];
-			for(var i = 0, l=0; i < 9; i++){
-				list[i] = [];
-				for (var j = l; j < l+9; j++) {
-					var k = j > 8 ? j-9 : j;
-					list[i].push(k+1);
+			var m = 0;
+			for (var i = 0; i < 3; i++) {
+				var rand = new Array(0,1,2,3,4,5,6,7,8).sort((a,b)=>{return Math.random()>.5?-1:1});
+				for (var x = 0; x < 3; x++) for (var y = 0; y < 3; y++) {
+					_tNums[x+m][y+m] = rand[3*x+y]+1;
 				};
-				l = l+3 > 8 ? Math.floor((i+1)/3) : l+3;
-			}
-			var rand = new Array(0,1,2,3,4,5,6,7,8).sort((a,b)=>{return Math.random()>.5?-1:1});
-			for (var i = 0; i < 9; i++) for (var j = 0; j < 9; j++) {
-				_tNums[i].push(list[i][j]);
+				m += 3;
 			};
+			solveSudoku(_tNums);
 			for (var i = 0; i < _iRow; i++) {
 				var tmp = [0,1,2,3,4,5,6,7,8];
-				for (var j = 0, cnt = Math.floor(Math.random()*2); j < cnt; j++) {
+				for (var j = 0, cnt = Math.floor(Math.random()*6); j < cnt; j++) {
 					var rand = Math.floor(Math.random()*(tmp.length-1));
 					var idx = tmp.splice(rand, 1);
 					_tNums[i][idx] = 0;
@@ -248,7 +269,62 @@
 				};
 			}
 		}
+		function solveSudoku (b) {
+			var m1 = [], m2 = [], m3 = [];
+			for (var i = 0; i < _iRow; i++) {
+				m1.push(1022);
+				m2.push(1022);
+				m3.push(1022);
+			};
+			var l = [];
+			for (var i = 0; i < _iRow; i++) for (var j = 0; j < _iRow; j++) {
+				var num = b[i][j];
+				if (num == 0) l.push(i*9+j);
+				else {
+					var tmp = 1 << num;
+					m1[j] ^= tmp;
+					m2[i] ^= tmp;
+					m3[3*Math.floor(i/3)+Math.floor(i/3)] ^= tmp;
+				}
+			};
+			getValid(b, 0, m1, m2, m3, l);
+		}
+		function getValid (b, k, m1, m2, m3, l) {
+			var idx = l[k];
+			var col = idx % 9, row = Math.floor(idx/9), block = 3*Math.floor(row/3)+Math.floor(col/3);
+			var num = m1[col] & m2[row] & m3[block]; //某位为1即可能的解
+			while(num > 0){
+				var tmp = num & -num; //二进制数第一个是1的数
+				num ^= tmp;
+				b[row][col] = getBinaryCnt(tmp);
+				m1[col] ^= tmp;
+				m2[row] ^= tmp;
+				m3[block] ^= tmp;
+				if (k+1 == l.length) return true;
+				if (getValid(b, k+1, m1, m2, m3, l)) return true;
+				b[row][col] = 0;
+				m1[col] |= tmp;
+				m2[row] |= tmp;
+				m3[block] |= tmp;
+			}
+			return false;
+		}
+		//获取1右边0的个数
+		function getBinaryCnt (n) {
+			var cnt = 0;
+			while(n>1){
+				cnt++;
+				n = n >> 1;
+			}
+			return cnt;
+		}
 		function initGridShow () {
+			for (var i = 0; i < _iTotal; i++) {
+				gHelp.children[i].visible = false;
+			};
+			for (var i = 0; i < _tNull.length; i++) {
+				gHelp.children[_tNull[i]].visible = true;
+			};
 			for (var i = 0; i < _iTotal; i++) {
 				var row = Math.floor(i/_iRow);
 				var col = i%_iRow;
@@ -274,31 +350,33 @@
 	    	return true;
 	    }
 	    function showResult () {
-	    	var area = _iRow * _iRow;
 	    	var timerandom = 0.5;
-	    	for (var i = 0; i < _iRow; i++) for (var j = 0; j < _iRow; j++) for (var z = 0; z < _iRow; z++){
-	    		var idx = z * area + i * _iRow + j;
+	    	for (var i = 0; i < _iRow; i++) for (var j = 0; j < _iRow; j++){
+	    		var idx = i * _iRow + j;
 	    		var obj = group.children[idx];
 			    TweenMax.to(
 			        obj.position,
 			        timerandom,
-			        {x:obj.position.x+(0.5-Math.random())*500,y:obj.position.y+(0.5-Math.random())*500,z:obj.position.z+Math.random()*500,delay:0,} 
+			        {x:obj.position.x+(0.5-Math.random())*500,y:obj.position.y+(0.5-Math.random())*500,delay:0,} 
 			    );
 			    TweenMax.to(
                     obj.position,
                     timerandom,
-                    {x:LENGTH*j-OFFSET,y:-LENGTH*i+OFFSET,z:LENGTH*z-OFFSET,delay:.6,ease:Power2.easeIn} 
+                    {x:LENGTH*j-OFFSET,y:-LENGTH*i+OFFSET,delay:.6,ease:Power2.easeIn} 
                 );
 			}
 	    }
 	    function onStart(){
+	    	// var start = new Date().getTime();
 			_bGameOver = false;
 			for (var i = 0; i < 9; i++) {
-				_tNums[i] = [];
+				_tNums[i] = [0,0,0,0,0,0,0,0,0];
 			};
 			_tNull = [];
 			initNums();
 			initGridShow();
+			// var end = new Date().getTime();
+			// console.log(start+" "+end+" "+(end-start));
 		}
 		function init(){
 			initParas();
@@ -309,9 +387,10 @@
 			initScene();
 			initListener();
 			// initLight();
-			initOrbControls();
+			// initOrbControls();
 			// initGrid(); //显示网格
 			initGroup();
+			initLines();
 			animate();
 			onStart();
 		}
