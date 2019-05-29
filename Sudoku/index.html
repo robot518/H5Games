@@ -33,9 +33,9 @@
 	<div id="info"> <font size="40">数独</font> </div>
 	<script>
 		var stats, renderer, camera, scene, sound, loader;
-		var materials, group, preObj, gHelp;
-		var _iRow = 9, _iTotal, _tNums, _bGameOver, _tNull;
-		var LENGTH = 10, OFFSET = LENGTH*(_iRow-1)/2; 
+		var _bGameOver, _iRow = 9, _iTotal, preObj, LENGTH = 10, OFFSET = LENGTH*(_iRow-1)/2;
+		var materials, group, _tNums, _tNull, gHelp;
+		//初始化参数
 		function initParas(){
 			materials = []; //0按钮，1地雷，2旗帜，3-12数字0-9，13绿旗，14播放
 			var material = new THREE.MeshBasicMaterial();
@@ -52,6 +52,7 @@
 			_tNull = [];
 			_bGameOver = false;
 		}
+		//初始化事件
 		function initEvent () {
 			addEventListener('click', onMouseClick, false);
 			addEventListener('touchstart', onMouseClick, false);
@@ -65,22 +66,28 @@
 			stats.domElement.style.top = '0px';
 			document.body.appendChild( stats.domElement );
         }
+        //初始化渲染器
 		function initRederer(){
 			renderer = new THREE.WebGLRenderer( { antialias: true } );
 			renderer.setPixelRatio( window.devicePixelRatio );
 			renderer.setSize( window.innerWidth, window.innerHeight );
 			document.body.appendChild( renderer.domElement );
 		}
+		//初始化相机
 		function initCamera(){
+			//透视相机
 			// camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+			//正交相机
 			camera = new THREE.OrthographicCamera( window.innerWidth / - 5, window.innerWidth / 5, window.innerHeight / 5, window.innerHeight / - 5, 10, 1000 );
 			camera.position.set( 0, 0, 100 );
 		}
+		//初始化场景
 		function initScene(){
 			scene = new THREE.Scene();
 			scene.background = new THREE.Color( 0x2E8B57 );
 			// scene.fog = new THREE.Fog( 0xcce0ff, 500, 10000 );
 		}
+		//初始化声音监听器
 		function initListener () {
 			var listener = new THREE.AudioListener();
 			camera.add(listener);
@@ -103,6 +110,11 @@
             // light = new THREE.PointLight(0x0000FF);
             // light.position.set(0, 0, 100);
             scene.add(light);
+        }
+        function initGrid(){
+            var helper = new THREE.GridHelper( 1000, 50 );
+            helper.rotation.x = Math.PI/2;
+            scene.add( helper );
         }
         // 格子
 		function initGroup(){
@@ -139,11 +151,11 @@
         	scene.add( group );
         	scene.add(gHelp);
 		}
-		// 3*3网格
+		// 3*3网格线
 		function initLines () {
 			var mat = new THREE.LineBasicMaterial({color: 0x000000, linewidth: 4})
 			var geo = new THREE.Geometry();
-			geo.vertices.push(new THREE.Vector3(-OFFSET-LENGTH/2, OFFSET-2.5*LENGTH, -OFFSET+LENGTH/2), new THREE.Vector3(OFFSET+LENGTH/2, OFFSET-2.5*LENGTH, -OFFSET+LENGTH/2));
+			geo.vertices.push(new THREE.Vector3(-OFFSET-LENGTH/2, OFFSET-2.5*LENGTH, -OFFSET+LENGTH/2+5), new THREE.Vector3(OFFSET+LENGTH/2, OFFSET-2.5*LENGTH, -OFFSET+LENGTH/2+5));
 			for (var i = 0; i < 2; i++) {
 				var line = new THREE.Line(geo, mat);
 				line.position.y = OFFSET-4*LENGTH-3*LENGTH*i;
@@ -156,11 +168,6 @@
 				scene.add(line2);
 			};
 		}
-		function initGrid(){
-            var helper = new THREE.GridHelper( 1000, 50 );
-            helper.rotation.x = Math.PI/2;
-            scene.add( helper );
-        }
 		function onWindowResize() {
 
 			camera.aspect = window.innerWidth / window.innerHeight;
@@ -261,7 +268,7 @@
 			solveSudoku(_tNums);
 			for (var i = 0; i < _iRow; i++) {
 				var tmp = [0,1,2,3,4,5,6,7,8];
-				for (var j = 0, cnt = Math.floor(Math.random()*6); j < cnt; j++) {
+				for (var j = 0, cnt = Math.floor(Math.random()*6+1); j < cnt; j++) {
 					var rand = Math.floor(Math.random()*(tmp.length-1));
 					var idx = tmp.splice(rand, 1);
 					_tNums[i][idx] = 0;
@@ -294,7 +301,7 @@
 			var col = idx % 9, row = Math.floor(idx/9), block = 3*Math.floor(row/3)+Math.floor(col/3);
 			var num = m1[col] & m2[row] & m3[block]; //某位为1即可能的解
 			while(num > 0){
-				var tmp = num & -num; //二进制数第一个是1的数
+				var tmp = num & -num; //二进制数右边数起第一个是1的数
 				num ^= tmp;
 				b[row][col] = getBinaryCnt(tmp);
 				m1[col] ^= tmp;
