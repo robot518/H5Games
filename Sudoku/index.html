@@ -127,7 +127,8 @@
 			mesh.scale.set(.85,.85,.85);
 			var helpColor = 0xFF0000;
 			var boxHelp = new THREE.BoxHelper(mesh, helpColor);
-			boxHelp.scale.set(3,3,3);
+			var scale = 5;
+			boxHelp.scale.set(scale,scale,scale);
         	gHelp.add(boxHelp);
 			for (var i = 0; i < _iRow; i++) for (var j = 0; j < _iRow; j++) for (var z = 0; z < 1; z++){
 				if (i == 0 && j == 0 && z == 0) continue;
@@ -136,7 +137,7 @@
 				group.add(temp);
 				temp.scale.set(.85,.85,.85);
 				boxHelp = new THREE.BoxHelper(temp, helpColor);
-				boxHelp.scale.set(3,3,3);
+				boxHelp.scale.set(scale,scale,scale);
 	        	gHelp.add(boxHelp);
 			}
 			var PY = 1.8*LENGTH;
@@ -146,10 +147,10 @@
         	group.add(box);
         	box.position.set(-3*LENGTH, OFFSET+PY, -OFFSET );
         	//nums
-        	for (var i = 0; i < 9; i++) {
+        	for (var i = 0; i < 10; i++) {
         		var temp = mesh.clone();
-        		temp.position.set(LENGTH*i-OFFSET, -OFFSET-PY, -OFFSET);
-        		temp.material = materials[4+i];
+        		temp.position.set(LENGTH*i-OFFSET-0.5*LENGTH, -OFFSET-PY, -OFFSET);
+        		temp.material = materials[3+i];
 				group.add(temp);
         	};
 
@@ -161,15 +162,15 @@
 			var mat = new THREE.LineBasicMaterial({color: 0x000000, linewidth: 10})
 			var geo = new THREE.Geometry();
 			geo.vertices.push(new THREE.Vector3(-OFFSET-LENGTH/2, OFFSET-2.5*LENGTH, -OFFSET+LENGTH/2), new THREE.Vector3(OFFSET+LENGTH/2, OFFSET-2.5*LENGTH, -OFFSET+LENGTH/2));
-			for (var i = 0; i < 2; i++) {
+			for (var i = 0; i < 4; i++) {
 				var line = new THREE.Line(geo, mat);
-				line.position.y = OFFSET-4*LENGTH-3*LENGTH*i;
+				line.position.y = OFFSET-LENGTH-3*LENGTH*i;
 				scene.add(line);
 
 				var line2 = new THREE.Line(geo, mat);
 				line2.position.y = OFFSET-4*LENGTH;
 				line2.rotation.z = 90 * Math.PI / 180;
-				if (i == 1) line2.position.x = OFFSET+LENGTH/2-1.5*LENGTH;
+				line2.position.x = OFFSET+2*LENGTH-3*LENGTH*i;
 				scene.add(line2);
 			};
 		}
@@ -393,7 +394,7 @@
 		function init(){
 			initParas();
 			initEvent();
-			// initStat();
+			initStat();
 			initRederer();
 			initCamera();
 			initScene();
@@ -409,7 +410,7 @@
 		function animate() {
 			renderer.render( scene, camera );
 			requestAnimationFrame( animate );
-			// stats.update();
+			stats.update();
 		}
 		init();
     </script>
