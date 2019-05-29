@@ -123,6 +123,11 @@
         	var box = new THREE.Mesh( geo, materials[14] );
         	group.add(box);
         	box.position.set(0, -LENGTH*_iRow, LENGTH*_iRow );
+        	//back
+        	var back = box.clone();
+        	back.material = materials[13];
+        	group.add(back);
+        	back.position.set(0, LENGTH*_iRow, LENGTH*_iRow)
 
         	scene.add( group );
 		}
@@ -162,7 +167,9 @@
 	            if (idx == _iTotal) {
 	            	playSound("click");
 	            	onStart();
-	            } else if (!_bGameOver) {
+	            } else if (idx == _iTotal+1)
+	            	window.location.href='../index.html';
+	            if (!_bGameOver) {
 		            if (_tNum[idx] == -1){ //地雷
 		            	playSound("bomb");
 						obj.material = materials[12];

@@ -153,6 +153,11 @@
         		temp.material = materials[3+i];
 				group.add(temp);
         	};
+        	//back
+        	var back = box.clone();
+        	back.material = materials[13];
+        	group.add(back);
+        	back.position.set(3*LENGTH, OFFSET+PY, -OFFSET)
 
         	scene.add( group );
         	scene.add(gHelp);
@@ -205,7 +210,9 @@
 	            if (idx == _iTotal) {
 	            	playSound("click");
 	            	onStart();
-	            } else if (!_bGameOver) {
+	            } else if (idx == _iTotal+11)
+					window.location.href='../index.html';
+	            else if (!_bGameOver) {
 	            	if (idx > _iTotal){
 	            		playSound("click");
 	            		if (preObj) preObj.material.color = new THREE.Color( 0xffffff );
