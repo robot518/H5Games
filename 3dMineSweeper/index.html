@@ -23,11 +23,11 @@
 				display:block;
 			}
 	</style>
-    <script src="js/three.js"></script>
-    <script src='js/stats.js'></script>
-    <script src='js/TrackballControls.js'></script>
-    <script src="js/OrbitControls.js"></script>
-    <script src="js/TweenMax.min.js"></script>
+    <script src="../js/three.js"></script>
+    <script src='../js/stats.js'></script>
+    <script src='.,/js/TrackballControls.js'></script>
+    <script src="../js/OrbitControls.js"></script>
+    <script src="../js/TweenMax.min.js"></script>
 </head>
 <body>
 	<div id="info"> <font size="40">扫雷魔方可翻转，(左键)按住并移动即可</font> </div>
@@ -327,7 +327,7 @@
 		function init(){
 			initParas();
 			initEvent();
-			// initStat();
+			initStat();
 			initRederer();
 			initCamera();
 			initScene();
@@ -342,7 +342,7 @@
 		function animate() {
 			renderer.render( scene, camera );
 			requestAnimationFrame( animate );
-			// stats.update();
+			stats.update();
 		}
 		init();
     </script>

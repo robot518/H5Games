@@ -23,11 +23,9 @@
 				display:block;
 			}
 	</style>
-    <script src="js/three.js"></script>
-    <script src='js/stats.js'></script>
-    <script src='js/TrackballControls.js'></script>
-    <script src="js/OrbitControls.js"></script>
-    <script src="js/TweenMax.min.js"></script>
+    <script src="../js/three.js"></script>
+    <script src='../js/stats.js'></script>
+    <script src="../js/TweenMax.min.js"></script>
 </head>
 <body>
 	<div id="info"> <font size="40">数独</font> </div>
@@ -59,8 +57,10 @@
 			window.addEventListener( 'resize', onWindowResize, false );
 		}
 		function initStat() {
-        	stats = new Stats();
+        	stats = new Stats({bars: 200, barHeight: 70});
 			stats.setMode(0); // 0: fps, 1: ms
+			var dom = stats.domElement;
+			console.log(dom.offsetWidth, dom.offsetHeight);
 			stats.domElement.style.position = 'absolute';
 			stats.domElement.style.left = '0px';
 			stats.domElement.style.top = '0px';
