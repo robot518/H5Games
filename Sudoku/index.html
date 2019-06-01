@@ -57,10 +57,8 @@
 			window.addEventListener( 'resize', onWindowResize, false );
 		}
 		function initStat() {
-        	stats = new Stats({bars: 200, barHeight: 70});
+        	stats = new Stats();
 			stats.setMode(0); // 0: fps, 1: ms
-			var dom = stats.domElement;
-			console.log(dom.offsetWidth, dom.offsetHeight);
 			stats.domElement.style.position = 'absolute';
 			stats.domElement.style.left = '0px';
 			stats.domElement.style.top = '0px';

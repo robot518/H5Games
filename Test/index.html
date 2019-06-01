@@ -1,0 +1,51 @@
+<!-- @author: Smile Chen, https://github.com/SmileChen518/H5-games -->
+<!DOCTYPE html>
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" /> 
+    <title>Test</title>
+    <style>
+    	canvas { width: 100%; height: 100% }
+    	body {
+				font-family: Monospace;
+				background-color: #000;
+				color: #fff;
+				margin: 0px;
+				overflow: hidden;
+			}
+		#info {
+				color: #fff;
+				position: absolute;
+				top: 10px;
+				width: 100%;
+				text-align: center;
+				z-index: 100;
+				display:block;
+			}
+	</style>
+    <script src='../js/stats.js'></script>
+</head>
+<body>
+	<div id="info"> <font size="40">什么都没做的情况下</font> </div>
+	<script>
+		var stats;
+		function initStat() {
+        	stats = new Stats();
+			stats.setMode(0); // 0: fps, 1: ms
+			stats.domElement.style.position = 'absolute';
+			stats.domElement.style.left = '0px';
+			stats.domElement.style.top = '0px';
+			document.body.appendChild( stats.domElement );
+        }
+		function init(){
+			initStat();
+			animate();
+		}
+		function animate() {
+			requestAnimationFrame( animate );
+			stats.update();
+		}
+		init();
+    </script>
+</body>
+</html>
