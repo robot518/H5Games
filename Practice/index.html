@@ -25,6 +25,7 @@
 	</style>
 	<script src="../js/three.js"></script>
     <script src='../js/stats.js'></script>
+	<script src="../js/OrbitControls.js"></script>
 </head>
 <body>
 	<div id="info"> <font size="40">练习</font> </div>
@@ -42,7 +43,7 @@
 		};
 		var stats, renderer, camera, scene, sound, loader;
 		var airplane;
-		var newTime, deltaTime, oldTime;
+		var newTime, deltaTime, oldTime, HEIGHT = 0;
 		function initStat() {
         	stats = new Stats();
 			stats.setMode(0); // 0: fps, 1: ms
@@ -69,6 +70,12 @@
 		  document.body.appendChild( renderer.domElement );
 		  window.addEventListener( 'resize', onWindowResize, false );
 		}
+		// 初始化轨迹球控件
+	    function initOrbControls() {
+	        var orbControl = new THREE.OrbitControls(camera, renderer.domElement);
+	        orbControl.minDistance = 25;
+			orbControl.maxDistance = 1000;
+	    }
 		function initLights() {
 
 		  hemisphereLight = new THREE.HemisphereLight(0xaaaaaa,0x000000, .9)
@@ -338,13 +345,13 @@
 		  airplane = new AirPlane();
 		  var scale = .7;
 		  airplane.mesh.scale.set(scale,scale,scale);
-		  airplane.mesh.position.set(-50, 100, 0);
+		  airplane.mesh.position.set(-50, HEIGHT, 0);
 		  scene.add(airplane.mesh);
 		}
 		function initBox() {
 			var geo = new THREE.CubeGeometry( 20, 20, 20 );
         	var box = new THREE.Mesh(geo, new THREE.MeshPhongMaterial( { color: 0x000fff } ));
-        	box.position.set(50, 100, 0 );
+        	box.position.set(50, HEIGHT, 0 );
         	// box.rotation.y = -Math.PI/8;
         	scene.add(box);
 		}
@@ -352,13 +359,14 @@
 			var geo = new THREE.CubeGeometry( 20, 2, 2 );
 			// var geo = new THREE.BoxGeometry(20,2,2,1,1,1);;
         	var bullet = new THREE.Mesh(geo, new THREE.MeshPhongMaterial( { color: 0xff0000 } ));
-        	bullet.position.set(20, 100, 0 );
+        	bullet.position.set(20, HEIGHT, 0 );
         	// box.rotation.y = -Math.PI/8;
         	scene.add(bullet);
 		}
 		function init(){
 			initStat();
 			initScene();
+			initOrbControls();
 			initLights();
 			createPlane();
 			initBox();
