@@ -26,6 +26,7 @@
 	<script src="../js/three.js"></script>
     <script src='../js/stats.js'></script>
 	<script src="../js/OrbitControls.js"></script>
+	<script src="../js/ParametricGeometries.js"></script>
 </head>
 <body>
 	<div id="info"> <font size="40">练习1</font> </div>
@@ -44,6 +45,10 @@
 		var stats, renderer, camera, scene, sound, loader;
 		var airplane;
 		var newTime, deltaTime, oldTime, HEIGHT = 0;
+		var meshMaterial;
+		function initParas(){
+			meshMaterial = new THREE.MeshPhongMaterial( { color: 0x156289, emissive: 0x072534, side: THREE.DoubleSide, flatShading: true } );
+		}
 		function initStat() {
         	stats = new Stats();
 			stats.setMode(0); // 0: fps, 1: ms
@@ -78,28 +83,41 @@
 	    }
 		function initLights() {
 
-		  hemisphereLight = new THREE.HemisphereLight(0xaaaaaa,0x000000, .9)
+		  // hemisphereLight = new THREE.HemisphereLight(0xaaaaaa,0x000000, .9)
 
-		  ambientLight = new THREE.AmbientLight(0xdc8874, .5);
+		  // ambientLight = new THREE.AmbientLight(0xdc8874, .5);
 
-		  shadowLight = new THREE.DirectionalLight(0xffffff, .9);
-		  shadowLight.position.set(150, 350, 350);
-		  shadowLight.castShadow = true;
-		  shadowLight.shadow.camera.left = -400;
-		  shadowLight.shadow.camera.right = 400;
-		  shadowLight.shadow.camera.top = 400;
-		  shadowLight.shadow.camera.bottom = -400;
-		  shadowLight.shadow.camera.near = 1;
-		  shadowLight.shadow.camera.far = 1000;
-		  shadowLight.shadow.mapSize.width = 4096;
-		  shadowLight.shadow.mapSize.height = 4096;
+		  // shadowLight = new THREE.DirectionalLight(0xffffff, .9);
+		  // shadowLight.position.set(150, 350, 350);
+		  // shadowLight.castShadow = true;
+		  // shadowLight.shadow.camera.left = -400;
+		  // shadowLight.shadow.camera.right = 400;
+		  // shadowLight.shadow.camera.top = 400;
+		  // shadowLight.shadow.camera.bottom = -400;
+		  // shadowLight.shadow.camera.near = 1;
+		  // shadowLight.shadow.camera.far = 1000;
+		  // shadowLight.shadow.mapSize.width = 4096;
+		  // shadowLight.shadow.mapSize.height = 4096;
 
-		  var ch = new THREE.CameraHelper(shadowLight.shadow.camera);
+		  // var ch = new THREE.CameraHelper(shadowLight.shadow.camera);
 
-		  //scene.add(ch);
-		  scene.add(hemisphereLight);
-		  scene.add(shadowLight);
-		  scene.add(ambientLight);
+		  // //scene.add(ch);
+		  // scene.add(hemisphereLight);
+		  // scene.add(shadowLight);
+		  // scene.add(ambientLight);
+
+			var lights = [];
+			lights[ 0 ] = new THREE.PointLight( 0xffffff, 1, 0 );
+			lights[ 1 ] = new THREE.PointLight( 0xffffff, 1, 0 );
+			lights[ 2 ] = new THREE.PointLight( 0xffffff, 1, 0 );
+
+			lights[ 0 ].position.set( 0, 200, 0 );
+			lights[ 1 ].position.set( 100, 200, 100 );
+			lights[ 2 ].position.set( - 100, - 200, - 100 );
+
+			scene.add( lights[ 0 ] );
+			scene.add( lights[ 1 ] );
+			scene.add( lights[ 2 ] );
 
 		}
 		function onWindowResize() {
@@ -110,28 +128,90 @@
 			renderer.setSize( window.innerWidth, window.innerHeight );
 
 		}
-		function initBox() {
-			var geo = new THREE.CubeGeometry( 20, 20, 20 );
-        	var box = new THREE.Mesh(geo, new THREE.MeshPhongMaterial( { color: 0x000fff } ));
-        	box.position.set(50, HEIGHT, 0 );
-        	// box.rotation.y = -Math.PI/8;
-        	scene.add(box);
+		function initPolyhedron() {
+			var verticesOfCube = [
+			    -1,-1,-1,    1,-1,-1,    1, 1,-1,    -1, 1,-1,
+			    -1,-1, 1,    1,-1, 1,    1, 1, 1,    -1, 1, 1,
+			];
+
+			var indicesOfFaces = [
+			    2,1,0,    0,3,2,
+			    0,4,7,    7,3,0,
+			    0,1,5,    5,4,0,
+			    1,2,6,    6,5,1,
+			    2,3,7,    7,6,2,
+			    4,5,6,    6,7,4
+			];
+
+			var geometry = new THREE.PolyhedronGeometry( verticesOfCube, indicesOfFaces, 6, 2 );
+			var mesh = new THREE.Mesh( geometry, meshMaterial ) ;
+			scene.add( mesh );
 		}
-		function initBullet() {
-			var geo = new THREE.CubeGeometry( 20, 2, 2 );
-			// var geo = new THREE.BoxGeometry(20,2,2,1,1,1);;
-        	var bullet = new THREE.Mesh(geo, new THREE.MeshPhongMaterial( { color: 0xff0000 } ));
-        	bullet.position.set(20, HEIGHT, 0 );
-        	// box.rotation.y = -Math.PI/8;
-        	scene.add(bullet);
+		function initExtrude() {
+			var length = 12, width = 8;
+
+			var shape = new THREE.Shape();
+			shape.moveTo( 0,0 );
+			shape.lineTo( 0, width );
+			shape.lineTo( length, width );
+			shape.lineTo( length, 0 );
+			shape.lineTo( 0, 0 );
+
+			var extrudeSettings = {
+				steps: 2,
+				depth: 16,
+				bevelEnabled: true,
+				bevelThickness: 1,
+				bevelSize: 1,
+				bevelSegments: 1
+			};
+
+			var geometry = new THREE.ExtrudeGeometry( shape, extrudeSettings );
+			var mesh = new THREE.Mesh( geometry, meshMaterial ) ;
+			mesh.position.set(0,50,0);
+			scene.add( mesh );
+		}
+		function initEdges() {
+			var geometry = new THREE.BoxBufferGeometry( 100, 100, 100 );
+			var edges = new THREE.EdgesGeometry( geometry );
+			var line = new THREE.LineSegments( edges, new THREE.LineBasicMaterial( { color: 0xffffff } ) );
+			scene.add( line );
+		}
+		function initParaGEO () {
+			var geometry = new THREE.ParametricGeometry( THREE.ParametricGeometries.klein, 25, 25 );
+			var klein = new THREE.Mesh( geometry, meshMaterial );
+			klein.position.set(-50,0,0);
+			scene.add( klein );
+		}
+		function initShape () {
+			var x = 0, y = 0;
+
+			var heartShape = new THREE.Shape();
+
+			heartShape.moveTo( x + 5, y + 5 );
+			heartShape.bezierCurveTo( x + 5, y + 5, x + 4, y, x, y );
+			heartShape.bezierCurveTo( x - 6, y, x - 6, y + 7,x - 6, y + 7 );
+			heartShape.bezierCurveTo( x - 6, y + 11, x - 3, y + 15.4, x + 5, y + 19 );
+			heartShape.bezierCurveTo( x + 12, y + 15.4, x + 16, y + 11, x + 16, y + 7 );
+			heartShape.bezierCurveTo( x + 16, y + 7, x + 16, y, x + 10, y );
+			heartShape.bezierCurveTo( x + 7, y, x + 5, y + 5, x + 5, y + 5 );
+
+			var geometry = new THREE.ShapeGeometry( heartShape );
+			var mesh = new THREE.Mesh( geometry, meshMaterial ) ;
+			mesh.position.set(50,0,0);
+			scene.add( mesh );
 		}
 		function init(){
+			initParas();
 			initStat();
 			initScene();
 			initOrbControls();
 			initLights();
-			initBox();
-			initBullet();
+			initPolyhedron();
+			initExtrude();
+			initEdges();
+			initParaGEO();
+			initShape();
 			animate();
 		}
 		function animate() {
