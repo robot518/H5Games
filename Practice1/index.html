@@ -44,8 +44,9 @@
 		};
 		var stats, renderer, camera, scene, sound, loader;
 		var airplane;
-		var newTime, deltaTime, oldTime, HEIGHT = 0;
+		var HEIGHT = 0;
 		var meshMaterial;
+		var skeleton;
 		function initParas(){
 			meshMaterial = new THREE.MeshPhongMaterial( { color: 0x156289, emissive: 0x072534, side: THREE.DoubleSide, flatShading: true } );
 		}
@@ -144,7 +145,8 @@
 			];
 
 			var geometry = new THREE.PolyhedronGeometry( verticesOfCube, indicesOfFaces, 6, 2 );
-			var mesh = new THREE.Mesh( geometry, meshMaterial ) ;
+			var mat = new THREE.MeshNormalMaterial();
+			var mesh = new THREE.Mesh( geometry, mat ) ;
 			scene.add( mesh );
 		}
 		function initExtrude() {
@@ -211,9 +213,114 @@
 			geomPropeller.vertices[6].z+=5;
 			geomPropeller.vertices[7].y+=5;
 			geomPropeller.vertices[7].z-=5;
-			var mesh = new THREE.Mesh( geomPropeller, meshMaterial ) ;
+			var material = new THREE.LineBasicMaterial( {
+				color: 0x00FF,
+				linewidth: 2,
+				// linecap: 'round', //ignored by WebGLRenderer
+				// linejoin:  'round' //ignored by WebGLRenderer
+			} );
+			var mesh = new THREE.Mesh( geomPropeller, material ) ;
 			mesh.position.set(0,-50,0);
 			scene.add( mesh );
+		}
+		function initBox () {
+			var geo = new THREE.BoxGeometry(10,10,10);
+			var material = new THREE.LineDashedMaterial( {
+				color: 0xffffff,
+				linewidth: 1,
+				scale: 1,
+				dashSize: 1,
+				gapSize: 3,
+			} );
+			var mesh = new THREE.Mesh(geo, material);
+			mesh.position.x = 100;
+			scene.add(mesh);
+		}
+		function initStarField(){
+			var starsGeometry = new THREE.Geometry();
+
+			for ( var i = 0; i < 10000; i ++ ) {
+
+				var star = new THREE.Vector3();
+				star.x = THREE.Math.randFloatSpread( 2000 );
+				star.y = THREE.Math.randFloatSpread( 2000 );
+				star.z = THREE.Math.randFloatSpread( 2000 );
+
+				starsGeometry.vertices.push( star );
+
+			}
+
+			var starsMaterial = new THREE.PointsMaterial( { color: 0xffffff } );
+
+			var starField = new THREE.Points( starsGeometry, starsMaterial );
+
+			scene.add( starField );
+		}
+		function initSkeleton(){
+			var geometry = new THREE.CylinderBufferGeometry( 5, 5, 5, 5, 15, 5, 30 );
+
+			// create the skin indices and skin weights
+
+			var position = geometry.attributes.position;
+
+			var vertex = new THREE.Vector3();
+
+			var skinIndices = [];
+			var skinWeights = [];
+
+			for ( var i = 0; i < position.count; i ++ ) {
+
+				vertex.fromBufferAttribute( position, i );
+
+				// compute skinIndex and skinWeight based on some configuration data
+
+				var y = ( vertex.y + 5 );
+
+				var skinIndex = Math.floor( y / 5 );
+				var skinWeight = ( y % 5 ) / 5;
+
+				skinIndices.push( skinIndex, skinIndex + 1, 0, 0 );
+				skinWeights.push( 1 - skinWeight, skinWeight, 0, 0 );
+
+			}
+
+			geometry.addAttribute( 'skinIndex', new THREE.Uint16BufferAttribute( skinIndices, 4 ) );
+			geometry.addAttribute( 'skinWeight', new THREE.Float32BufferAttribute( skinWeights, 4 ) );
+
+			// create skinned mesh and skeleton
+
+			var mesh = new THREE.SkinnedMesh( geometry, meshMaterial );
+
+			var bones = [];
+
+			var shoulder = new THREE.Bone();
+			var elbow = new THREE.Bone();
+			var hand = new THREE.Bone();
+
+			shoulder.add( elbow );
+			elbow.add( hand );
+
+			bones.push( shoulder );
+			bones.push( elbow );
+			bones.push( hand );
+
+			shoulder.position.y = -5;
+			elbow.position.y = 0;
+			hand.position.y = 5;
+
+			skeleton = new THREE.Skeleton( bones );
+
+			// see example from THREE.Skeleton
+
+			var rootBone = skeleton.bones[ 0 ];
+			mesh.add( rootBone );
+
+			// bind the skeleton to the mesh
+
+			mesh.bind( skeleton );
+			mesh.position.x = 50;
+			mesh.position.y = 50;
+			scene.add(mesh);
 		}
 		function init(){
 			initParas();
@@ -221,18 +328,24 @@
 			initScene();
 			initOrbControls();
 			initLights();
+
 			initPolyhedron();
 			initExtrude();
 			initEdges();
 			initParaGEO();
 			initShape();
 			initTest();
+			initBox();
+			initStarField();
+
+			initSkeleton();
+
 			animate();
 		}
 		function animate() {
-			newTime = new Date().getTime();
-			deltaTime = newTime-oldTime;
-			oldTime = newTime;
+			// skeleton.bones[ 0 ].rotation.x = -0.1;
+			// skeleton.bones[ 1 ].rotation.x = 0.2;
+
 			renderer.render( scene, camera );
 			requestAnimationFrame( animate );
 			stats.update();
