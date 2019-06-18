@@ -201,6 +201,20 @@
 			mesh.position.set(50,0,0);
 			scene.add( mesh );
 		}
+		function initTest () {
+			var geomPropeller = new THREE.BoxGeometry(20,10,10,1,1,1);
+			geomPropeller.vertices[4].y-=5;
+			geomPropeller.vertices[4].z+=5;
+			geomPropeller.vertices[5].y-=5;
+			geomPropeller.vertices[5].z-=5;
+			geomPropeller.vertices[6].y+=5;
+			geomPropeller.vertices[6].z+=5;
+			geomPropeller.vertices[7].y+=5;
+			geomPropeller.vertices[7].z-=5;
+			var mesh = new THREE.Mesh( geomPropeller, meshMaterial ) ;
+			mesh.position.set(0,-50,0);
+			scene.add( mesh );
+		}
 		function init(){
 			initParas();
 			initStat();
@@ -212,6 +226,7 @@
 			initEdges();
 			initParaGEO();
 			initShape();
+			initTest();
 			animate();
 		}
 		function animate() {
