@@ -4,3 +4,5 @@
 ![Image](https://raw.githubusercontent.com/aschen518/H5-games/master/images/3dMineSweeper.jpg) 
 # [数独](http://47.107.178.120/Sudoku/)  
 ![Image](https://raw.githubusercontent.com/aschen518/H5-games/master/images/Sudoku.jpg) 
+
+# [游戏详细介绍](https://zhuanlan.zhihu.com/p/61366826) 
